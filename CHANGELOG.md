@@ -4,7 +4,7 @@ All notable changes to HX. Versions follow [SemVer](https://semver.org/). Update
 
 ## [Unreleased]
 ### Added
-- `CONTRIBUTING.md` (EN + pt-BR), `SECURITY.md`, `CODEOWNERS`, issue and PR templates, Dependabot for GitHub Actions.
+- `CONTRIBUTING.md` (EN + pt-BR), `SECURITY.md`, `CODEOWNERS`, issue and PR templates, Dependabot for GitHub Actions (patch/minor bumps auto-merge after CI).
 
 ## [0.2.0] - 2026-11-20
 ### Added
