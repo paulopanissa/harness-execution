@@ -11,87 +11,140 @@
 </p>
 
 <p align="center">
-  <b>Um único harness de agentes para Claude Code e Codex CLI.</b><br>
-  Menos tokens, nenhum <code>.md</code> de spec perdido no repo, e cada tarefa roteada para o agente certo da stack.
+  <b>One agent harness for Claude Code and Codex CLI.</b><br>
+  Fewer tokens, no throwaway spec <code>.md</code> files in your repo, and every task routed to the right stack agent.
 </p>
+
+<p align="center"><b>English</b> · <a href="docs/README.pt-BR.md">Português</a></p>
 
 ---
 
-## Por que existe
+## Why
 
-Agentes de código gastam token em três lugares: contexto que ninguém pediu, texto que ninguém lê e retrabalho por falta de validação. O HX ataca os três:
+Coding agents burn tokens in three places: context nobody asked for, text nobody reads, and rework caused by skipped validation. HX goes after all three:
 
-| Problema | O que o HX faz |
+| Problem | What HX does |
 |---|---|
-| Contexto inchado | Hierarquia obrigatória: grafo de código → memória por query → leitura cirúrgica. O `explorer` entrega um **Context Pack de no máximo 30 linhas**. |
-| Skills pré-carregadas | Skills ficam em `skills/` e só são lidas **quando a fase pede**. Nada entra no prompt por padrão. |
-| `plan.md`, `analysis.md`, `notes.md`… | Hook `block-spec-md.sh` **bloqueia** a criação de `.md` intermediário. Plano vive na conversa. |
-| "Pronto" sem prova | `gate.sh` roda typecheck, lint e testes **só dos arquivos alterados**. Sem `GATE: PASS`, não está pronto. |
-| Duas ferramentas, duas configs | `AGENTS.md` é a fonte única, linkada em `~/.claude/CLAUDE.md` e `~/.codex/AGENTS.md`. Agentes viram `.md` (Claude) e `.toml` (Codex) gerados pelo `sync.py`. |
+| Bloated context | A fixed lookup order: code graph → memory by query → surgical reads. The `explorer` agent returns a **Context Pack of at most 30 lines**. |
+| Preloaded skills | Skills live in `skills/` and are read **only when a phase needs them**. Nothing enters the prompt by default. |
+| `plan.md`, `analysis.md`, `notes.md`… | The `block-spec-md.sh` hook **blocks** creating intermediate Markdown. Plans stay in the conversation. |
+| "Done" without proof | `gate.sh` runs typecheck, lint and tests **only for changed files**. No `GATE: PASS`, not done. |
+| Two tools, two configs | `AGENTS.md` is the single source, linked to `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`. Agents are generated as `.md` (Claude) and `.toml` (Codex) by `sync.py`. |
 
-## Instalação
+## Install
 
-Requisitos: `git`, `bash` (no Windows, Git Bash) e Python 3.11+. Sem dependências externas.
+Requirements: `git`, `bash` (Git Bash on Windows) and Python 3.11+. No third-party Python packages.
 
 ```bash
 git clone https://github.com/paulopanissa/harness-execution ~/.hx
 python3 ~/.hx/scripts/install.py      # Windows: py ~/.hx/scripts/install.py
 ```
 
-O instalador:
+The installer:
 
-1. pergunta se você quer um **módulo corporativo privado** (opcional, veja abaixo);
-2. grava `~/.hx/config.yaml`, liga `AGENTS.md`, agentes, comandos e hooks no Claude Code e no Codex;
-3. valida tudo (links, frontmatter, TOML, hooks);
-4. oferece os **mods de UI** do catálogo. Nenhum vem marcado; você escolhe.
+1. asks whether you want a **private org module** (optional, see below);
+2. writes `~/.hx/config.yaml` and wires `AGENTS.md`, agents, commands and hooks into Claude Code and Codex;
+3. validates everything (links, frontmatter, TOML, hooks);
+4. offers the **UI mods** from the catalog. Nothing is preselected; you choose.
 
-Flags para rodar sem perguntas: `--no-org`, `--org <url>`, `--mods filetree,hx-skin`, `--no-mods`.
+Non-interactive flags: `--no-org`, `--org <url>`, `--mods filetree,hx-skin`, `--no-mods`.
 
-Depois de editar qualquer coisa em `~/.hx`, rode `python3 ~/.hx/scripts/sync.py` (`--dry-run` para ver antes).
+After editing anything in `~/.hx`, run `python3 ~/.hx/scripts/sync.py` (`--dry-run` to preview).
 
-## Fluxo
+> The rules in `AGENTS.md` are written in Brazilian Portuguese and tell the agent to answer in pt-BR. To use another language, edit section 1 of `AGENTS.md` and run `sync.py`.
 
-```text
-/hx <issue | WI | URL | texto>
-  └─ explorer        read-only, Context Pack ≤ 30 linhas
-      └─ agente da stack   node-ts-dev · react-ts-dev · python-dev · gamedev-dev
-          └─ gate.sh       typecheck + lint + testes relacionados ao diff
-              └─ reviewer  PASS  ou  arquivo:linha — erro
-                  └─ resumo de PR (5 bullets) + destilação de memória
+## Context setup: Graphify + ai-memory (recommended)
+
+`AGENTS.md` tells the agent to gather context in this order: **Graphify → ai-memory → surgical reads**. Both tools are optional. Without them HX falls back to a module-scoped `rg` plus `~/.hx/fallback-memory.jsonl`, which works but costs more tokens.
+
+### Graphify: code graph
+
+[safishamsi/graphify](https://github.com/safishamsi/graphify) builds a graph of your repository (symbols, dependencies, call sites). The agent queries it through the CLI instead of reading whole files.
+
+```bash
+uv tool install graphifyy            # or: pipx install graphifyy  (the package name has two "y")
+graphify install                     # Claude Code skill
+graphify install --platform codex    # Codex skill
 ```
 
-Pausa só em três casos: ambiguidade crítica, falha após 2 tentativas, antes de push/PR.
+In each repository:
 
-### Comandos
+```bash
+/graphify .                # inside Claude Code (Codex: $graphify .)
+graphify hook install      # rebuild the graph on every commit/checkout
+graphify update .          # after a git pull
+```
 
-| Comando | Faz |
+Output goes to `graphify-out/`; add it to the project's `.gitignore`. Code is parsed locally (tree-sitter); docs and images are sent to the model API with your own key.
+
+### ai-memory: memory by query
+
+[alphaonedev/ai-memory-mcp](https://github.com/alphaonedev/ai-memory-mcp) is a SQLite-backed MCP memory server. `explorer` pulls gotchas with 1 to 3 queries, and the `memory-distill` skill stores 3 to 5 durable facts at the end of each task.
+
+```bash
+cargo install ai-memory
+# macOS/Linux alternative:
+curl -fsSL https://raw.githubusercontent.com/alphaonedev/ai-memory-mcp/main/install.sh | sh
+```
+
+Register it under the name **`ai-memory`**, which is the name `AGENTS.md` uses. Prefer an absolute `--db` path:
+
+```bash
+claude mcp add ai-memory --scope user -- ai-memory --db "$HOME/.claude/ai-memory.db" mcp --tier semantic
+codex mcp add ai-memory -- ai-memory --db "$HOME/.claude/ai-memory.db" mcp --tier semantic
+```
+
+Pointing both tools at the same `--db` lets Claude Code and Codex share one memory. Tools exposed: `memory_store`, `memory_recall`, `memory_search`.
+
+Using Obsidian? Swap in a vault-backed memory MCP such as [mem-vault](https://github.com/jagoff/mem-vault) or [obsidian-memory-mcp](https://github.com/YuNaga224/obsidian-memory-mcp) and register it as `ai-memory`. The rule stays the same: the agent queries memory and never reads the whole vault.
+
+### Without either
+
+Everything still works, at a higher token cost. Memory goes to `~/.hx/fallback-memory.jsonl` (one JSON line per fact) and is searched with `rg`.
+
+## Flow
+
+```text
+/hx <issue | work item | URL | text>
+  └─ explorer          read-only, Context Pack ≤ 30 lines
+      └─ stack agent   node-ts-dev · react-ts-dev · python-dev · gamedev-dev
+          └─ gate.sh   typecheck + lint + tests related to the diff
+              └─ reviewer  PASS  or  file:line — error
+                  └─ PR summary (5 bullets) + memory distillation
+```
+
+The agent pauses only for: critical ambiguity, failure after 2 attempts, and before push/PR.
+
+### Commands
+
+| Command | Does |
 |---|---|
-| `/hx <entrada>` | pipeline completo acima |
-| `/hx:fix <erro>` | causa raiz primeiro, correção mínima, gate |
-| `/hx:test` | testes só do caminho novo/alterado |
-| `/hx:pre-pr` | gate + review + resumo de PR |
-| `/hx:game <feature>` | fluxo de gamedev (loop, ECS, perf budget) |
-| `/hx:clean-legacy` | remove configs de orquestradores antigos do `CLAUDE.md` |
-| `/hx:org <fase> <id>` | fase do fluxo corporativo (só com módulo org ativo) |
+| `/hx <input>` | the full flow above |
+| `/hx:fix <error>` | root cause first, minimal fix, gate |
+| `/hx:test` | tests only for new/changed paths |
+| `/hx:pre-pr` | gate + review + PR summary |
+| `/hx:game <feature>` | gamedev flow (loop, ECS, perf budget) |
+| `/hx:clean-legacy` | strips old orchestrator config from `CLAUDE.md` |
+| `/hx:org <phase> <id>` | one phase of the org flow (org module only) |
 
-No Codex, os mesmos comandos funcionam como texto: o `AGENTS.md` instrui o agente a ler `~/.hx/commands/<arquivo>.md`.
+In Codex the same commands work as plain text: `AGENTS.md` tells the agent to read `~/.hx/commands/<file>.md`.
 
-### Agentes
+### Agents
 
-| Agente | Quando | Acesso |
+| Agent | When | Access |
 |---|---|---|
-| `explorer` | sempre primeiro | read-only |
-| `node-ts-dev` | Node, NestJS, Prisma, APIs, filas | escrita |
-| `react-ts-dev` | React, Next.js, Tailwind, UI | escrita |
-| `python-dev` | Python, FastAPI, automação, IA | escrita |
-| `gamedev-dev` | game loop, ECS, física, shaders | escrita |
-| `reviewer` | diff + gate + segurança | read-only |
+| `explorer` | always first | read-only |
+| `node-ts-dev` | Node, NestJS, Prisma, APIs, queues | write |
+| `react-ts-dev` | React, Next.js, Tailwind, UI | write |
+| `python-dev` | Python, FastAPI, automation, AI pipelines | write |
+| `gamedev-dev` | game loop, ECS, physics, shaders | write |
+| `reviewer` | diff + gate + security | read-only |
 
-Modelo por tier (`fast`, `default`, `deep`) é configurável em `config.yaml`, separado para Claude e Codex.
+Models per tier (`fast`, `default`, `deep`) are set in `config.yaml`, separately for Claude and Codex.
 
-## Mods de UI
+## UI mods
 
-Mods mudam a interface do Claude Code (painéis, barras, temas). **Rodam fora do modelo: zero token**, salvo onde o catálogo avisa.
+Mods change the Claude Code interface (panes, bars, themes). **They run outside the model: zero tokens**, unless the catalog says otherwise.
 
 ```bash
 python3 ~/.hx/scripts/mod.py list
@@ -99,71 +152,61 @@ python3 ~/.hx/scripts/mod.py install hx-skin filetree
 python3 ~/.hx/scripts/mod.py remove filetree
 ```
 
-| Mod | O que é | Origem |
+| Mod | What it is | Source |
 |---|---|---|
-| `filetree` | árvore de arquivos lidos/editados, ao vivo | [data-goblin/claude-code-filetree](https://github.com/data-goblin/claude-code-filetree) |
-| `blast-radius` | impacto de cada edição | [hamzafer/claude-code-mods](https://github.com/hamzafer/claude-code-mods) |
-| `savvy-progress` | barra de progresso do turno | [Berkay2002/berkays-mods](https://github.com/Berkay2002/berkays-mods) |
-| `hx-skin` | skins **Dusk** (Drácula refinado), **Ember** e **Tide**; `/hx-skin` troca | este repo, `mods/hx-skin` |
-| `claude-skins` | pacote da comunidade (manual) | [basicScandal/claude-skins](https://github.com/basicScandal/claude-skins) |
+| `filetree` | live tree of files read/edited | [data-goblin/claude-code-filetree](https://github.com/data-goblin/claude-code-filetree) |
+| `blast-radius` | impact of each edit | [hamzafer/claude-code-mods](https://github.com/hamzafer/claude-code-mods) |
+| `savvy-progress` | turn progress bar | [Berkay2002/berkays-mods](https://github.com/Berkay2002/berkays-mods) |
+| `hx-skin` | **Dusk** (a refined Dracula), **Ember** and **Tide** skins; `/hx-skin` switches | this repo, `mods/hx-skin` |
+| `claude-skins` | community skin pack (manual install) | [basicScandal/claude-skins](https://github.com/basicScandal/claude-skins) |
 
-O catálogo (`mods/catalog.json`) tem uma lista `codex` reservada para quando o Codex tiver mods equivalentes. PRs com novos mods são bem-vindos.
+The catalog (`mods/catalog.json`) has a `codex` list reserved for when Codex gets equivalent mods. PRs adding mods are welcome.
 
-## Módulo org (privado e opcional)
+## Org module (private, optional)
 
-Empresas costumam ter um fluxo próprio (fases, padrão de branch, guardas). O HX **não traz nada disso no repo público**. Ele só sabe ler um *preset* que você mantém num repositório privado:
+Companies usually have their own flow (phases, branch naming, guard hooks). **None of that ships in this repo.** HX only knows how to read a *preset* that you keep in a private repository:
 
 ```yaml
-# hx-org.yaml (no SEU repo privado)
+# hx-org.yaml (in YOUR private repo)
 name: acme
-vendor_repo: git@github.com:acme/agent-flow.git   # onde ficam os arquivos de cada fase
-remote_pattern: github\.com[:/]acme/              # ativa só em repos da empresa
-claude_md_marker: acme-agent-flow                 # ou quando o CLAUDE.md local cita isto
+vendor_repo: git@github.com:acme/agent-flow.git   # where each phase file lives
+remote_pattern: github\.com[:/]acme/              # active only in company repos
+claude_md_marker: acme-agent-flow                 # or when the local CLAUDE.md mentions this
 phase_path: phases/{phase}.md
 phases: discovery,kickoff,work,pre-pr,pr
 branch_regex: ^(fix|feat|chore|refactor)/{id}$
-guard_hooks: test-db-guard.js                     # opcional, hooks do vendor
+guard_hooks: test-db-guard.js                     # optional, hooks from the vendor repo
 ```
 
 ```bash
 python3 ~/.hx/scripts/install.py --org git@github.com:acme/hx-preset.git
 ```
 
-Preset e fluxo são clonados em `~/.hx/vendor/` (ignorado pelo git) e atualizados em background a cada `auto_update_days`. Fora dos repos da empresa, o modo org fica desligado sozinho.
+The preset and the flow repo are cloned into `~/.hx/vendor/` (git-ignored) and refreshed in the background every `auto_update_days`. Outside company repos, org mode turns itself off.
 
-## Estrutura
+## Layout
 
 ```text
 ~/.hx
-├── AGENTS.md            fonte única de regras (Claude + Codex)
-├── agents/              6 agentes → .md (Claude) e .toml (Codex)
-├── commands/            /hx e subcomandos
-├── skills/              core · quality · stack · gamedev (sob demanda)
+├── AGENTS.md            single source of rules (Claude + Codex)
+├── agents/              6 agents → .md (Claude) and .toml (Codex)
+├── commands/            /hx and subcommands
+├── skills/              core · quality · stack · gamedev (on demand)
 ├── hooks/               block-spec-md · org-only · strip-legacy-oc
 ├── scripts/             install · sync · gate · mod · check_updates
-├── mods/                catálogo + hx-skin
-└── vendor/              (local) módulo org privado
+├── mods/                catalog + hx-skin
+├── docs/                translations
+└── vendor/              (local) private org module
 ```
 
-## Regras que o `AGENTS.md` impõe
+## Rules enforced by `AGENTS.md`
 
-- Respostas curtas; nunca repetir código já salvo, citar `arquivo:linha`.
-- Contexto: grafo de código → memória por query → leitura cirúrgica. Nada de varrer o repo inteiro.
-- Docs de biblioteca via Context7 antes de chutar API.
-- Conventional commits; commit, push e PR só com confirmação.
-- Bug: causa raiz antes de editar; 3 tentativas falhas → para e reporta.
+- Short answers; never repeat code already on disk, cite `file:line`.
+- Context: code graph → memory by query → surgical reads. No repo-wide scans.
+- Library docs via Context7 before guessing an API.
+- Conventional commits; commit, push and PR only after confirmation.
+- Bugs: root cause before editing; 3 failed attempts → stop and report.
 
-As regras estão em português, mas são fáceis de adaptar: edite `AGENTS.md` e rode `sync.py`.
+## License
 
-## English (short)
-
-**HX** is a single agent harness for **Claude Code** and **Codex CLI**. One `AGENTS.md`, six routed agents, on-demand skills, a diff-scoped quality gate, a hook that blocks throwaway spec/plan Markdown files, and an optional zero-token UI mods catalog. Corporate workflows live in a private preset repo, never here.
-
-```bash
-git clone https://github.com/paulopanissa/harness-execution ~/.hx
-python3 ~/.hx/scripts/install.py
-```
-
-## Licença
-
-[MIT](LICENSE). Use, adapte, mande PR.
+[MIT](LICENSE). Use it, adapt it, send a PR.
