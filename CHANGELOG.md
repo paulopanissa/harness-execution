@@ -2,6 +2,10 @@
 
 All notable changes to HX. Versions follow [SemVer](https://semver.org/). Update an existing install with `python ~/.hx/scripts/update.py`.
 
+## [Unreleased]
+### Added
+- `CONTRIBUTING.md` (EN + pt-BR), `SECURITY.md`, `CODEOWNERS`, issue and PR templates, Dependabot for GitHub Actions.
+
 ## [0.2.0] - 2026-11-20
 ### Added
 - `scripts/update.py`: update in place (fast-forward pull, org repos, sync, validation). `--check` only reports.

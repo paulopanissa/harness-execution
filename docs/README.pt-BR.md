@@ -258,6 +258,8 @@ python3 -m unittest discover -s tests -t tests
 
 A suíte roda sync, update e os hooks num sandbox descartável (`HX_HOME`, Claude e Codex próprios), sem tocar na sua instalação real.
 
+PRs são bem-vindos; leia antes o [CONTRIBUTING.pt-BR.md](CONTRIBUTING.pt-BR.md). Segurança: [SECURITY.md](../SECURITY.md).
+
 ## Licença
 
 [MIT](../LICENSE). Use, adapte, mande PR.

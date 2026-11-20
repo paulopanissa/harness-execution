@@ -1,0 +1,24 @@
+name: Feature request
+description: Propose a change to HX
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard or wasteful today? Real examples help.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+    validations:
+      required: true
+  - type: textarea
+    id: tokens
+    attributes:
+      label: Token impact
+      description: Does it add anything to the always-loaded context? Estimate with `python3 ~/.hx/scripts/measure.py baseline`.
+    validations:
+      required: true

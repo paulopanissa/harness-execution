@@ -259,6 +259,8 @@ python3 -m unittest discover -s tests -t tests
 
 The suite runs sync, update and the hooks inside a throwaway sandbox (its own `HX_HOME`, Claude and Codex homes), so it never touches your real install.
 
+Pull requests are welcome; read [CONTRIBUTING.md](CONTRIBUTING.md) first. Security issues: [SECURITY.md](SECURITY.md).
+
 ## License
 
 [MIT](LICENSE). Use it, adapt it, send a PR.
