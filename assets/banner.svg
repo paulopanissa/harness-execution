@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="1280" height="400" role="img" aria-labelledby="t d">
+  <title id="t">HX — Harness Execution</title>
+  <desc id="d">Um harness único para Claude Code e Codex CLI</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1b26"/>
+      <stop offset="0.55" stop-color="#1e1f29"/>
+      <stop offset="1" stop-color="#2a1f3a"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#bd93f9"/>
+      <stop offset="0.5" stop-color="#ff92d0"/>
+      <stop offset="1" stop-color="#6cc3d5"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#bd93f9" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#bd93f9" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#6cc3d5" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.22" cy="0.5" r="0.45">
+      <stop offset="0" stop-color="#bd93f9" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#bd93f9" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="400" fill="url(#bg)"/>
+  <rect width="1280" height="400" fill="url(#grid)"/>
+  <rect width="1280" height="400" fill="url(#glow)"/>
+
+  <!-- pipeline: explorer → stack agent → gate → reviewer -->
+  <g fill="none" stroke="url(#line)" stroke-width="2">
+    <path d="M140 330 H1140"/>
+  </g>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15" fill="#c6c3d9">
+    <g transform="translate(180 330)"><circle r="7" fill="#1e1f29" stroke="#bd93f9" stroke-width="2"/><text y="30" text-anchor="middle">explorer</text></g>
+    <g transform="translate(440 330)"><circle r="7" fill="#1e1f29" stroke="#ff92d0" stroke-width="2"/><text y="30" text-anchor="middle">stack agent</text></g>
+    <g transform="translate(700 330)"><circle r="7" fill="#1e1f29" stroke="#f1c27d" stroke-width="2"/><text y="30" text-anchor="middle">gate.sh</text></g>
+    <g transform="translate(960 330)"><circle r="7" fill="#1e1f29" stroke="#7ee0a1" stroke-width="2"/><text y="30" text-anchor="middle">reviewer → PASS</text></g>
+  </g>
+
+  <!-- marca HX -->
+  <g transform="translate(150 92)">
+    <rect width="176" height="176" rx="36" fill="#242533" stroke="url(#mark)" stroke-width="3"/>
+    <text x="88" y="118" text-anchor="middle" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="92" font-weight="800" fill="url(#mark)" letter-spacing="-4">HX</text>
+  </g>
+
+  <g font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
+    <text x="370" y="170" font-size="64" font-weight="800" fill="#ecebf4" letter-spacing="-1.5">Harness Execution</text>
+    <text x="372" y="214" font-size="24" fill="#a29fbb">Um harness, dois agentes: Claude Code + Codex CLI</text>
+    <g font-size="16" font-weight="600">
+      <rect x="372" y="236" width="150" height="30" rx="15" fill="#bd93f9" fill-opacity="0.14" stroke="#bd93f9" stroke-opacity="0.5"/>
+      <text x="447" y="256" text-anchor="middle" fill="#d6bcfb">menos tokens</text>
+      <rect x="534" y="236" width="138" height="30" rx="15" fill="#6cc3d5" fill-opacity="0.14" stroke="#6cc3d5" stroke-opacity="0.5"/>
+      <text x="603" y="256" text-anchor="middle" fill="#9fd9e5">zero spec .md</text>
+      <rect x="684" y="236" width="176" height="30" rx="15" fill="#7ee0a1" fill-opacity="0.14" stroke="#7ee0a1" stroke-opacity="0.5"/>
+      <text x="772" y="256" text-anchor="middle" fill="#a8ecc0">roteado por stack</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,58 @@
+{
+  "$comment": "Catálogo de mods HX. Todos são opcionais: install.py/mod.py oferece e o usuário escolhe. tokens=0 → roda só na interface.",
+  "claude": [
+    {
+      "id": "filetree",
+      "name": "File Tree",
+      "description": "Painel com a árvore de arquivos que o agente lê/edita, ao vivo",
+      "kind": "plugin",
+      "marketplace": "data-goblin/claude-code-filetree",
+      "plugin": "filetree@claude-code-filetree",
+      "tested_commit": "1fdc3a963f2d",
+      "tokens": 0
+    },
+    {
+      "id": "blast-radius",
+      "name": "Blast Radius",
+      "description": "Mostra o raio de impacto de cada edição (arquivos e dependentes afetados)",
+      "kind": "plugin",
+      "marketplace": "hamzafer/claude-code-mods",
+      "plugin": "blast-radius@claude-code-mods",
+      "tested_commit": "f88e0c35f714",
+      "tokens": 0
+    },
+    {
+      "id": "savvy-progress",
+      "name": "Savvy Progress",
+      "description": "Barra de progresso do turno acima do prompt",
+      "kind": "plugin",
+      "marketplace": "Berkay2002/berkays-mods",
+      "plugin": "savvy-progress@berkays-mods",
+      "tested_commit": "f7ce92d28cf3",
+      "tokens": 0
+    },
+    {
+      "id": "hx-skin",
+      "name": "HX Skin",
+      "description": "Skins Dusk (Drácula refinado), Ember e Tide; /hx-skin troca",
+      "kind": "plugin",
+      "marketplace": "{HX_HOME}/mods",
+      "plugin": "hx-skin@hx-mods",
+      "tokens": 0
+    },
+    {
+      "id": "claude-skins",
+      "name": "Claude Skins (comunidade)",
+      "description": "Pacote de skins da comunidade; instalação manual via install.sh",
+      "kind": "manual",
+      "url": "https://github.com/basicScandal/claude-skins",
+      "steps": [
+        "git clone https://github.com/basicScandal/claude-skins",
+        "leia o install.sh antes de rodar: ele edita ~/.claude/settings.json",
+        "as 'personalities' injetam texto no prompt e custam tokens; as skins visuais não"
+      ],
+      "tokens": "personalities custam tokens"
+    }
+  ],
+  "codex": []
+}

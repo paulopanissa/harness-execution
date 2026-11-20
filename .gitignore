@@ -1,0 +1,17 @@
+# estado local da máquina
+config.yaml
+.last_sync
+.manifest.json
+.update.log
+.update.lock
+fallback-memory.jsonl
+backups/
+# módulo org privado (clonado pelo install.py, nunca versionar aqui)
+vendor/
+# lixo
+__pycache__/
+*.pyc
+node_modules/
+*.hx-bak
+.DS_Store
+Thumbs.db
