@@ -1,27 +1,27 @@
 # Skill: context-pack
-Protocolo de coleta de contexto mínimo. Saída ≤ 30 linhas.
+Minimal context-gathering protocol. Output ≤ 30 lines.
 
-## Ordem fixa
-1. **Graphify**: consultar símbolo/arquivo/feature do pedido → nós relevantes, deps diretas (1 salto), chamadores. Parar quando achar o ponto de mudança.
-2. **ai-memory**: 1–3 queries (módulo, feature, termo do erro). Extrair só gotchas/decisões aplicáveis. Nunca listar ou ler o vault inteiro do Obsidian.
-3. **Leitura cirúrgica**: ranges exatos dos arquivos apontados. > 400 linhas → só range. Máx. ~8 arquivos.
+## Fixed order
+1. **Graphify**: query the request's symbol/file/feature → relevant nodes, direct deps (1 hop), callers. Stop once the change point is found.
+2. **ai-memory**: 1–3 queries (module, feature, error term). Extract only applicable gotchas/decisions. Never list or read a whole Obsidian vault.
+3. **Surgical reads**: exact ranges of the files found. > 400 lines → range only. Max ~8 files.
 
-## Fallback (Graphify ou ai-memory indisponível)
-- Escopo: diretório do módulo alvo. `rg -n "<símbolo>" <dir-do-módulo>`; nunca o repo inteiro sem `-g`/dir.
-- Chamadores: `rg -n "<símbolo>\(" <dir-pai> -g '!**/node_modules/**'`.
-- Memória: `rg -i "<termo>" ~/.hx/fallback-memory.jsonl` (JSONL: `{"repo","area","fact","date"}`).
+## Fallback (Graphify or ai-memory unavailable)
+- Scope: the target module directory. `rg -n "<symbol>" <module-dir>`; never the whole repo without `-g`/dir.
+- Callers: `rg -n "<symbol>\(" <parent-dir> -g '!**/node_modules/**'`.
+- Memory: `rg -i "<term>" ~/.hx/fallback-memory.jsonl` (JSONL: `{"repo","area","fact","date"}`).
 
-## Saída
+## Output
 ```
 STACK: ...
-OBJETIVO: ...
-ARQUIVOS:
-- path:Lx-Ly — motivo
+GOAL: ...
+FILES:
+- path:Lx-Ly — reason
 DEPS: ...
 GOTCHAS: ...
-TESTES: ...
-ACEITE:
+TESTS: ...
+ACCEPTANCE:
 - ...
-RISCO: ...
+RISK: ...
 ```
-Proibido: colar código, criar `.md`, sugerir arquitetura nova.
+Forbidden: pasting code, creating `.md`, proposing new architecture.

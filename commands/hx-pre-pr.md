@@ -1,12 +1,12 @@
 ---
-description: Gate determinístico + reviewer no diff + resumo de PR
-argument-hint: [branch-base, ex. origin/main]
+description: Deterministic gate + reviewer on the diff + PR summary
+argument-hint: [base branch, e.g. origin/main]
 ---
-Base: $ARGUMENTS (vazio → diff local contra HEAD)
+Base: $ARGUMENTS (empty → local diff against HEAD)
 
-1. `bash ~/.hx/scripts/gate.sh` (com `--base $ARGUMENTS` se informado). Zero IA.
-   - `GATE: FAIL` → mostrar as linhas e PARAR. Não chamar reviewer.
-2. `GATE: PASS` → `reviewer` com o output do gate.
-   - Lista de erros → mostrar e PARAR (usuário decide corrigir ou `/hx:fix`).
-3. `PASS` → descrição de PR em 5 bullets (`~/.hx/skills/quality/pre-pr-gate.md`) + título conventional commit.
-4. Não fazer push/abrir PR sem confirmação.
+1. `bash ~/.hx/scripts/gate.sh` (with `--base $ARGUMENTS` if given). Zero AI.
+   - `GATE: FAIL` → show the lines and STOP. Do not call the reviewer.
+2. `GATE: PASS` → `reviewer` with the gate output.
+   - Error list → show it and STOP (the user decides to fix or run `/hx:fix`).
+3. `PASS` → PR description in 5 bullets (`~/.hx/skills/quality/pre-pr-gate.md`) + conventional-commit title.
+4. No push/PR without confirmation.

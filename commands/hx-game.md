@@ -1,14 +1,14 @@
 ---
-description: Feature de jogo direto no gamedev-dev com skills de gamedev
+description: Game feature straight to gamedev-dev with the gamedev skills
 argument-hint: <feature>
 ---
 Feature: $ARGUMENTS
 
-1. `explorer` → Context Pack (engine, cena/sistemas afetados, loop/update atual).
-2. `gamedev-dev` com o pack. Skills sob demanda conforme a feature:
-   - sistemas/estados/eventos → `~/.hx/skills/gamedev/game-architecture.md`
-   - controle/impacto/feedback → `~/.hx/skills/gamedev/game-feel-juice.md`
-   - spawn em massa/loop quente/FPS → `~/.hx/skills/gamedev/game-perf-budget.md`
-3. `bash ~/.hx/scripts/gate.sh` (sem testes → build/lint).
-4. `reviewer` focado em: alocação no update, dependência de FPS, acoplamento, leak de listeners.
-5. Saída (≤ 20 linhas): `FEITO (arquivo:linha)` · `PERF` · `GATE` · `REVIEW` · `PLAYTEST (passos)`.
+1. `explorer` → Context Pack (engine, affected scene/systems, current loop/update).
+2. `gamedev-dev` with the pack. On-demand skills by feature:
+   - systems/states/events → `~/.hx/skills/gamedev/game-architecture.md`
+   - controls/impact/feedback → `~/.hx/skills/gamedev/game-feel-juice.md`
+   - mass spawning/hot loop/FPS → `~/.hx/skills/gamedev/game-perf-budget.md`
+3. `bash ~/.hx/scripts/gate.sh` (no tests → build/lint).
+4. `reviewer` focused on: allocation in update, FPS dependence, coupling, listener leaks.
+5. Output (≤ 20 lines): `DONE (file:line)` · `PERF` · `GATE` · `REVIEW` · `PLAYTEST (steps)`.

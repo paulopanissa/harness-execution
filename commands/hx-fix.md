@@ -1,15 +1,15 @@
 ---
-description: Debug sistemático — causa raiz, fix mínimo, gate
-argument-hint: <erro | stack trace | comportamento>
+description: Systematic debugging — root cause, minimal fix, gate
+argument-hint: <error | stack trace | behavior>
 ---
-Erro: $ARGUMENTS
+Error: $ARGUMENTS
 
-1. Ler `~/.hx/skills/core/systematic-debugging.md` e seguir.
-2. `explorer` com o erro → Context Pack focado no ponto de falha (stack trace, arquivos, gotchas do ai-memory).
-3. Reprodução mínima (comando/teste que falha). Sem repro → coletar sinal, não editar.
-4. Hipóteses (3–5 → 2) com evidência; provar uma.
-5. Fix mínimo na causa + teste de regressão (`~/.hx/skills/quality/lean-test.md`), via agente da stack do pack.
-6. `bash ~/.hx/scripts/gate.sh` → exit 0 obrigatório.
-7. 3 strikes → PARAR e reportar.
+1. Read `~/.hx/skills/core/systematic-debugging.md` and follow it.
+2. `explorer` with the error → Context Pack focused on the failure point (stack trace, files, ai-memory gotchas).
+3. Minimal reproduction (a failing command/test). No repro → collect signal, do not edit.
+4. Hypotheses (3–5 → 2) with evidence; prove one.
+5. Minimal fix at the cause + regression test (`~/.hx/skills/quality/lean-test.md`), via the pack's stack agent.
+6. `bash ~/.hx/scripts/gate.sh` → exit 0 required.
+7. 3 strikes → STOP and report.
 
-Saída (≤ 15 linhas): `CAUSA` · `REPRO` · `FIX (arquivo:linha)` · `TESTE` · `GATE`.
+Output (≤ 15 lines): `CAUSE` · `REPRO` · `FIX (file:line)` · `TEST` · `GATE`.

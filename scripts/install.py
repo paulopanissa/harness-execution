@@ -30,6 +30,7 @@ from hxlib import (  # noqa: E402
     ORG_VENDOR_DIR,
     load_config,
     load_org_preset,
+    localized,
     mods_selected,
     parse_frontmatter,
     save_config,
@@ -103,7 +104,7 @@ def _same_content(a: Path, b: Path) -> bool:
 
 def validate(org: bool) -> list[str]:
     errors: list[str] = []
-    agents_md = HX_HOME / "AGENTS.md"
+    agents_md = localized("AGENTS.md", load_config())
     for link in (CLAUDE_HOME / "CLAUDE.md", CODEX_HOME / "AGENTS.md"):
         if not _same_content(agents_md, link):
             errors.append(f"{link} não aponta para {agents_md}")
@@ -129,8 +130,10 @@ def validate(org: bool) -> list[str]:
 
     try:
         settings = json.loads((CLAUDE_HOME / "settings.json").read_text(encoding="utf-8"))
-        if "block-spec-md.sh" not in json.dumps(settings.get("hooks", {})):
-            errors.append("hook block-spec-md.sh ausente em settings.json")
+        hooks_json = json.dumps(settings.get("hooks", {}))
+        for hook in ("block-spec-md.sh", "read-guard.sh"):
+            if hook not in hooks_json:
+                errors.append(f"hook {hook} ausente em settings.json")
     except (OSError, ValueError) as err:
         errors.append(f"settings.json: {err}")
 

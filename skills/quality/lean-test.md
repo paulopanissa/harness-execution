@@ -1,18 +1,18 @@
 # Skill: lean-test
-Testes cirúrgicos só para caminhos novos/alterados do diff. Sem `test-planner`, sem plano de testes em arquivo.
+Surgical tests only for new/changed paths of the diff. No test planner, no test-plan file.
 
-## Escopo
-1. `git diff --name-only HEAD` + `git ls-files --others --exclude-standard` → arquivos de código alterados.
-2. Para cada função/branch nova ou alterada: 1 happy path + 1–2 edge cases críticos (null/vazio, limite, erro esperado, permissão negada).
-3. Código não tocado → não testar. Refactor puro com teste existente passando → não adicionar teste.
+## Scope
+1. `git diff --name-only HEAD` + `git ls-files --others --exclude-standard` → changed code files.
+2. For each new or changed function/branch: 1 happy path + 1–2 critical edge cases (null/empty, boundary, expected error, permission denied).
+3. Untouched code → no tests. Pure refactor with existing tests passing → no new test.
 
-## Regras
-- Colocar teste junto do padrão do repo (`*.spec.ts`, `*.test.tsx`, `tests/test_*.py`).
-- Reusar fixtures/factories existentes. Fixture nova ≤ 15 linhas.
-- Mock só na fronteira (HTTP, DB, fila, relógio, FS). Nunca mockar a unidade testada.
-- Asserções de comportamento observável; sem snapshot de árvore inteira.
-- Nome do teste = comportamento: `retorna 404 quando pedido não existe`.
-- Teste determinístico: sem sleep, sem rede real, seed fixa.
+## Rules
+- Put tests where the repo's pattern says (`*.spec.ts`, `*.test.tsx`, `tests/test_*.py`).
+- Reuse existing fixtures/factories. New fixture ≤ 15 lines.
+- Mock only at the boundary (HTTP, DB, queue, clock, FS). Never mock the unit under test.
+- Assert observable behavior; no whole-tree snapshots.
+- Test name = behavior: `returns 404 when the order does not exist`.
+- Deterministic tests: no sleep, no real network, fixed seed.
 
-## Fim
-`bash ~/.hx/scripts/gate.sh` (roda só testes relacionados ao diff).
+## Finish
+`bash ~/.hx/scripts/gate.sh` (runs only tests related to the diff).

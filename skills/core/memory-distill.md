@@ -1,19 +1,19 @@
 # Skill: memory-distill
-Ao fechar a task: extrair 3–5 linhas PERMANENTES. Nada de diário.
+When closing a task: extract 3–5 PERMANENT lines. No diary.
 
-## Critério (só entra se TODOS)
-- Não é derivável do código/git (`git log`, leitura do arquivo).
-- Vale para tasks futuras (gotcha, decisão, restrição, comando não óbvio).
-- Cabe em 1 linha (≤ 160 chars), com área/módulo.
+## Criteria (only if ALL hold)
+- Not derivable from the code/git (`git log`, reading the file).
+- Useful for future tasks (gotcha, decision, constraint, non-obvious command).
+- Fits in 1 line (≤ 160 chars), with area/module.
 
-## Formato
-`[<repo>/<área>] <fato>. Motivo: <por quê>.`
-Ex.: `[api/billing] Webhook Stripe exige raw body; não usar json middleware na rota. Motivo: assinatura falha.`
+## Format
+`[<repo>/<area>] <fact>. Reason: <why>.`
+E.g.: `[api/billing] Stripe webhook needs the raw body; no json middleware on that route. Reason: signature check fails.`
 
-## Destino
-1. **ai-memory** (salvar cada linha como memória com tags repo/área).
-2. Indisponível → append em `~/.hx/fallback-memory.jsonl`:
-   `{"repo":"<repo>","area":"<área>","fact":"<fato>","date":"<YYYY-MM-DD>"}`
-3. Obsidian: só via ai-memory; nunca abrir/escrever no vault diretamente.
+## Destination
+1. **ai-memory** (store each line as a memory tagged repo/area).
+2. Unavailable → append to `~/.hx/fallback-memory.jsonl`:
+   `{"repo":"<repo>","area":"<area>","fact":"<fact>","date":"<YYYY-MM-DD>"}`
+3. Obsidian: only through ai-memory; never open/write the vault directly.
 
-Nada novo → não salve nada e diga `MEMÓRIA: nada novo`.
+Nothing new → save nothing and say `MEMORY: nothing new`.

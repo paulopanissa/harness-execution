@@ -25,9 +25,12 @@ ORG_PRESET_DIR = HX_HOME / "vendor" / "org-preset"
 ORG_PRESET_FILE = ORG_PRESET_DIR / "hx-org.yaml"
 ORG_VENDOR_DIR = HX_HOME / "vendor" / "org"
 MODS_DIR = HX_HOME / "mods"
+I18N_DIR = HX_HOME / "i18n"
+LANGUAGES = ("en", "pt-BR")
 
 TIERS = ("fast", "default", "deep")
 DEFAULT_CONFIG: dict[str, Any] = {
+    "language": "en",
     "org_enabled": False,
     "org_preset": "",
     "auto_update_days": 7,
@@ -136,6 +139,22 @@ def load_config() -> dict[str, Any]:
     raw = parse_yaml(CONFIG_PATH.read_text(encoding="utf-8"))
     current = {k: v for k, v in raw.items() if k in DEFAULT_CONFIG}  # descarta chaves obsoletas
     return merge_config(DEFAULT_CONFIG, current)
+
+
+def language(cfg: dict[str, Any]) -> str:
+    """Idioma das regras (`language` no config.yaml). Inválido → en."""
+    lang = str(cfg.get("language") or "en")
+    return lang if lang in LANGUAGES else "en"
+
+
+def localized(rel: str, cfg: dict[str, Any]) -> Path:
+    """Arquivo de regra no idioma configurado; cai para o inglês (raiz) se não houver tradução."""
+    lang = language(cfg)
+    if lang != "en":
+        candidate = I18N_DIR / lang / rel
+        if candidate.is_file():
+            return candidate
+    return HX_HOME / rel
 
 
 def load_org_preset() -> dict[str, Any]:

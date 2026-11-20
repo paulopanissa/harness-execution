@@ -31,7 +31,9 @@ from hxlib import (  # noqa: E402
     LAST_SYNC_PATH,
     MANIFEST_PATH,
     ORG_VENDOR_DIR,
+    language,
     load_org_preset,
+    localized,
     load_config,
     parse_frontmatter,
     resolve_model,
@@ -40,6 +42,7 @@ from hxlib import (  # noqa: E402
 HOOK_MARK_SPEC = "block-spec-md.sh"
 HOOK_MARK_UPDATE = "check_updates.py"
 HOOK_MARK_ORG = "org-only.sh"
+HOOK_MARK_READ = "read-guard.sh"
 
 CODEX_TOOL_MAP = {
     "Read": "shell (`sed -n`/`cat`)",
@@ -209,7 +212,8 @@ def build_codex_agent(meta: dict[str, str], body: str, cfg: dict[str, Any]) -> s
 
 
 def sync_agents(ctx: Ctx) -> None:
-    for src in sorted((HX_HOME / "agents").glob("*.md")):
+    for root in sorted((HX_HOME / "agents").glob("*.md")):
+        src = localized(f"agents/{root.name}", ctx.cfg)
         meta, body = parse_frontmatter(src.read_text(encoding="utf-8"))
         if not meta.get("name"):
             raise SystemExit(f"sync: {src} sem 'name' no frontmatter")
@@ -227,10 +231,10 @@ def command_target(stem: str) -> Path:
 
 def sync_commands(ctx: Ctx) -> None:
     org = bool(ctx.cfg.get("org_enabled"))
-    for src in sorted((HX_HOME / "commands").glob("hx*.md")):
-        if src.stem == "hx-org" and not org:
+    for root in sorted((HX_HOME / "commands").glob("hx*.md")):
+        if root.stem == "hx-org" and not org:
             continue
-        link_file(ctx, src, command_target(src.stem))
+        link_file(ctx, localized(f"commands/{root.name}", ctx.cfg), command_target(root.stem))
 
 
 # ---------------------------------------------------------------- settings.json
@@ -304,6 +308,8 @@ def sync_settings(ctx: Ctx) -> None:
 
     if not _has_hook(settings, "PreToolUse", HOOK_MARK_SPEC):
         settings = _add_hook(settings, "PreToolUse", "Write|Edit|MultiEdit", f'bash "{hooks_dir}/{HOOK_MARK_SPEC}"', 10)
+    if not _has_hook(settings, "PreToolUse", HOOK_MARK_READ):
+        settings = _add_hook(settings, "PreToolUse", "Read", f'bash "{hooks_dir}/{HOOK_MARK_READ}"', 10)
 
     org = bool(ctx.cfg.get("org_enabled"))
     if org and not _has_hook(settings, "SessionStart", HOOK_MARK_UPDATE):
@@ -358,13 +364,14 @@ def main() -> int:
     parser.add_argument("--quiet", action="store_true", help="sem log por arquivo")
     args = parser.parse_args()
 
-    agents_md = HX_HOME / "AGENTS.md"
+    cfg = load_config()
+    agents_md = localized("AGENTS.md", cfg)
     if not agents_md.is_file():
         print(f"sync: {agents_md} não existe", file=sys.stderr)
         return 1
 
     previous = load_manifest()
-    ctx = Ctx(args.dry_run, args.quiet, load_config(), datetime.now().strftime("%Y%m%d-%H%M%S"), dict(previous))
+    ctx = Ctx(args.dry_run, args.quiet, cfg, datetime.now().strftime("%Y%m%d-%H%M%S"), dict(previous))
     try:
         link_file(ctx, agents_md, CLAUDE_HOME / "CLAUDE.md")
         link_file(ctx, agents_md, CODEX_HOME / "AGENTS.md")
@@ -379,7 +386,7 @@ def main() -> int:
     if not args.dry_run:
         MANIFEST_PATH.write_text(json.dumps({"managed": ctx.managed}, indent=2) + "\n", encoding="utf-8")
         LAST_SYNC_PATH.write_text(datetime.now().isoformat(timespec="seconds") + "\n", encoding="utf-8")
-    print(f"sync: {'dry-run' if args.dry_run else 'ok'} — {ctx.changes} alteração(ões); org_enabled={bool(ctx.cfg.get('org_enabled'))}")
+    print(f"sync: {'dry-run' if args.dry_run else 'ok'} — {ctx.changes} alteração(ões); org_enabled={bool(ctx.cfg.get('org_enabled'))}; language={language(cfg)}")
     return 0
 
 

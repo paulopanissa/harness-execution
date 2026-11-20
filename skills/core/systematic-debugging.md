@@ -1,18 +1,18 @@
 # Skill: systematic-debugging
-Causa raiz antes de editar. Zero `.md`.
+Root cause before editing. Zero `.md`.
 
-## Passos
-1. **Sintoma exato**: mensagem de erro, stack, input, ambiente. Sem paráfrase.
-2. **Reprodução mínima**: comando/teste único que falha de forma determinística. Sem repro → coletar mais sinal (log temporário), não editar.
-3. **Hipóteses**: listar 3–5 causas possíveis; reduzir às 2 mais prováveis com evidência (Context Pack, git log -L, blame do trecho).
-4. **Provar**: log/assert temporário ou teste que confirme UMA hipótese. Só então editar.
-5. **Fix mínimo** na causa, não no sintoma. Teste de regressão que falhava antes e passa depois.
-6. Remover logs temporários. `bash ~/.hx/scripts/gate.sh`.
+## Steps
+1. **Exact symptom**: error message, stack, input, environment. No paraphrasing.
+2. **Minimal reproduction**: one command/test that fails deterministically. No repro → collect more signal (temporary log), do not edit.
+3. **Hypotheses**: list 3–5 possible causes; narrow to the 2 most likely with evidence (Context Pack, `git log -L`, blame of the section).
+4. **Prove**: temporary log/assert or a test that confirms ONE hypothesis. Only then edit.
+5. **Minimal fix** at the cause, not the symptom. A regression test that failed before and passes after.
+6. Remove temporary logs. `bash ~/.hx/scripts/gate.sh`.
 
-## Regra dos 3 strikes
-3 tentativas de fix sem sucesso → PARE. Reporte (≤ 10 linhas): sintoma, hipóteses descartadas + evidência, próxima suspeita, o que falta saber.
+## 3-strike rule
+3 failed fix attempts → STOP. Report (≤ 10 lines): symptom, discarded hypotheses + evidence, next suspect, what is still unknown.
 
-## Proibido
-- Editar "pra ver se resolve" sem hipótese.
-- Silenciar erro (`try/catch` vazio, `skip` de teste, `any`, `# type: ignore`) como fix.
-- Criar arquivo de análise/plano.
+## Forbidden
+- Editing "to see if it helps" without a hypothesis.
+- Silencing the error (empty `try/catch`, skipping a test, `any`, `# type: ignore`) as a fix.
+- Creating analysis/plan files.

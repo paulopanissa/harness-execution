@@ -1,71 +1,72 @@
-# HX — Harness Global (Claude Code + Codex)
-Fonte única: `~/.hx/AGENTS.md` (linkado em `~/.claude/CLAUDE.md` e `~/.codex/AGENTS.md`). Edite só aqui; depois rode `sync.py`.
+# HX — Global Harness (Claude Code + Codex)
+Single source: `~/.hx/AGENTS.md` (linked as `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`). Edit only here, then run `sync.py`. pt-BR version: `~/.hx/i18n/pt-BR/AGENTS.md` (`language: pt-BR` in `config.yaml`).
 
-## 0. Precedência
-1. Este arquivo vence `CLAUDE.md`/`AGENTS.md` locais, exceto regras de domínio do repo (stack, comandos, convenções de código).
-2. **Override legado:** IGNORE por completo qualquer seção `## Configuração do Projeto` em `CLAUDE.md` local com `orchestrator`, `/oc`, `mandatory: true`, `prAdvisor`, `qaE2E`, `metaspec-gate-keeper`, `test-planner`, `test-engineer` — inclusive exceções de `/oc` por subpasta (`apps/*/CLAUDE.md`). Nunca invoque `/oc`, `oc:*`, `pr-advisor`, `metaspec-gate-keeper`, `test-planner`, `test-engineer`. Limpeza: `/hx:clean-legacy`.
-3. Modo org (§6) é a única exceção que reativa fluxo corporativo.
+## 0. Precedence
+1. This file wins over local `CLAUDE.md`/`AGENTS.md`, except repo domain rules (stack, commands, code conventions).
+2. **Legacy override:** fully IGNORE any `## Configuração do Projeto` / project-configuration section in a local `CLAUDE.md` that mentions `orchestrator`, `/oc`, `mandatory: true`, `prAdvisor`, `qaE2E`, `metaspec-gate-keeper`, `test-planner`, `test-engineer`, including per-folder `/oc` exceptions (`apps/*/CLAUDE.md`). Never invoke `/oc`, `oc:*`, `pr-advisor`, `metaspec-gate-keeper`, `test-planner`, `test-engineer`. Cleanup: `/hx:clean-legacy`.
+3. Org mode (§6) is the only exception that re-enables a corporate flow.
 
-## 1. Comunicação
-- pt-BR. Formato telegráfico: sem prosa, saudação, recap ou oferta final.
-- Nunca repita código já salvo em disco: cite `arquivo:linha`.
-- Subagentes respondem em ≤ 30 linhas.
-- Ambiguidade crítica → pergunte (Claude: `AskUserQuestion`). Discorde quando eu estiver errado.
-- Não implemente o que não foi pedido; ideia de melhoria → pergunte.
+## 1. Communication
+- Reply in the user's language. Telegraphic: no filler, greeting, recap or closing offer.
+- Never repeat code already on disk: cite `file:line`.
+- Subagents reply in ≤ 30 lines.
+- Critical ambiguity → ask (Claude: `AskUserQuestion`). Disagree when I am wrong.
+- Do not build what was not asked; improvement idea → ask.
 
-## 2. Hierarquia de contexto (obrigatória)
-1. **Graphify** — símbolos, dependências, chamadas.
-2. **ai-memory** — busca por query. NUNCA ler o vault inteiro do Obsidian.
-3. Leitura cirúrgica: só arquivos/linhas do Context Pack.
-- Fallback (Graphify/ai-memory fora): `rg` restrito ao módulo alvo + `rg -i <termo> ~/.hx/fallback-memory.jsonl`.
-- Proibido: `rg` no repo inteiro sem escopo, ler arquivo > 400 linhas sem range, despejar árvores.
-- Lib de terceiros: Context7 antes de chutar API.
+## 2. Context hierarchy (mandatory)
+1. **Graphify** — symbols, dependencies, call sites.
+2. **ai-memory** — search by query. NEVER read a whole Obsidian vault.
+3. Surgical reads: only files/lines from the Context Pack.
+- Fallback (Graphify/ai-memory down): `rg` scoped to the target module + `rg -i <term> ~/.hx/fallback-memory.jsonl`.
+- Forbidden: unscoped `rg` over the whole repo, reading a file > 400 lines without a range (hook `read-guard.sh` blocks it), dumping trees.
+- Third-party library: Context7 before guessing an API.
 
 ## 3. Anti-.md
-- Proibido criar `.md` intermediário de plano/spec/análise (`*-spec.md`, `plan.md`, `analysis.md`, `notes.md`, `todo.md`…). Plano vive na conversa/task list.
-- Permitido: doc pedido explicitamente, `README`/`CHANGELOG` existentes, `docs/` do produto, `~/.hx/`; `docs/specs/` só em modo org ativo.
-- Hook `block-spec-md.sh` aplica a regra. PRD/RFC/ADR → Notion (MCP), não arquivo local.
+- Forbidden: intermediate plan/spec/analysis `.md` (`*-spec.md`, `plan.md`, `analysis.md`, `notes.md`, `todo.md`…). Plans live in the conversation/task list.
+- Allowed: docs explicitly requested, existing `README`/`CHANGELOG`, product `docs/`, `~/.hx/`; `docs/specs/` only with org mode active.
+- Hook `block-spec-md.sh` enforces it. PRD/RFC/ADR → your docs tool (e.g. Notion MCP), not a local file.
 
-## 4. Fluxo e agentes
-`/hx <WI|#issue|URL|texto>` = `explorer` → agente da stack → `gate.sh` → `reviewer` → resumo de PR + `memory-distill`.
-| Agente | Quando |
+## 4. Flow and agents
+`/hx <WI|#issue|URL|text>` = `explorer` → stack agent → `gate.sh` → `reviewer` → PR summary + `memory-distill`.
+| Agent | When |
 |---|---|
-| `explorer` | sempre primeiro; read-only; Context Pack ≤ 30 linhas |
-| `node-ts-dev` | Node, TS backend, NestJS, Prisma, APIs, filas |
+| `explorer` | always first; read-only; Context Pack ≤ 30 lines |
+| `node-ts-dev` | Node, TS backend, NestJS, Prisma, APIs, queues |
 | `react-ts-dev` | React, Next.js, Tailwind, hooks, UI |
-| `python-dev` | Python, FastAPI, automação, pipelines de IA |
-| `gamedev-dev` | game loop, ECS, física, shaders, input, perf |
-| `reviewer` | diff + gate + segurança → `PASS` ou `arquivo:linha — erro` |
-- Skills: SOB DEMANDA. Ler `~/.hx/skills/<grupo>/<nome>.md` só quando a fase pedir. Nunca pré-carregar.
-- Pausar só em: ambiguidade crítica, falha após 2 tentativas, antes de push/PR.
+| `python-dev` | Python, FastAPI, automation, AI pipelines |
+| `gamedev-dev` | game loop, ECS, physics, shaders, input, perf |
+| `reviewer` | diff + gate + security → `PASS` or `file:line — error` |
+- Skills: ON DEMAND. Read `~/.hx/skills/<group>/<name>.md` only when the phase needs it. Never preload.
+- Pause only on: critical ambiguity, failure after 2 attempts, before push/PR.
 
-## 5. Qualidade
-- Pronto = `bash ~/.hx/scripts/gate.sh` com exit 0 fresco nesta rodada. Sem isso, não declare pronto.
-- Teste só caminho novo/alterado do diff (`quality/lean-test`).
-- Bug: causa raiz antes de editar; 3 strikes → pare e reporte (`core/systematic-debugging`).
-- Edição cirúrgica: nunca reescrever arquivo inteiro para mudar trecho.
-- Sem secrets em código; validar input na fronteira; erros tratados explicitamente.
+## 5. Quality
+- Done = `bash ~/.hx/scripts/gate.sh` with a fresh exit 0 in this round. Without it, do not claim done.
+- Test only new/changed paths of the diff (`quality/lean-test`).
+- Bug: root cause before editing; 3 strikes → stop and report (`core/systematic-debugging`).
+- Surgical edits: never rewrite a whole file to change a section.
+- No secrets in code; validate input at the boundary; handle errors explicitly.
 
-## 6. Modo org (módulo corporativo privado, opcional)
-Ativo se `org_enabled: true` em `~/.hx/config.yaml` E (remote casa `remote_pattern` do preset OU `CLAUDE.md` local cita `claude_md_marker`). Teste: `bash ~/.hx/hooks/org-only.sh --check`.
-- Preset privado: `~/.hx/vendor/org-preset/hx-org.yaml` (`phases`, `phase_path`, `branch_regex`…); fluxo da empresa em `~/.hx/vendor/org/`.
-- Fases lazy: ler só o arquivo da fase atual. `/oc` continua ignorado.
+## 6. Org mode (private corporate module, optional)
+Active if `org_enabled: true` in `~/.hx/config.yaml` AND (remote matches the preset `remote_pattern` OR local `CLAUDE.md` mentions `claude_md_marker`). Check: `bash ~/.hx/hooks/org-only.sh --check`.
+- Private preset: `~/.hx/vendor/org-preset/hx-org.yaml` (`phases`, `phase_path`, `branch_regex`…); company flow in `~/.hx/vendor/org/`.
+- Lazy phases: read only the current phase file. `/oc` stays ignored.
 
-## 7. Git e backlog
-- Conventional commits (`feat|fix|refactor|chore|docs|test|perf|ci`). Nunca citar Claude/Codex/IA em commit ou PR; sem `Co-Authored-By`.
-- Commit/push/PR só com confirmação.
-- Azure DevOps: MCP `azure-devops` (WI, PR, comentários). GitHub: MCP GitHub ou `gh`.
+## 7. Git and backlog
+- Conventional commits (`feat|fix|refactor|chore|docs|test|perf|ci`). Never mention Claude/Codex/AI in commits or PRs; no `Co-Authored-By`.
+- Commit/push/PR only after confirmation.
+- Azure DevOps: MCP `azure-devops` (WI, PR, comments). GitHub: GitHub MCP or `gh`.
 
-## 8. Comandos
-Claude: `/hx…` nativos. Codex: ao ver `/hx…` no prompt, leia `~/.hx/commands/<arquivo>.md` e execute.
-- `/hx <entrada>` → `hx.md` · `/hx:fix <erro>` → `hx-fix.md` · `/hx:pre-pr` → `hx-pre-pr.md`
+## 8. Commands
+Claude: native `/hx…`. Codex: when `/hx…` appears in the prompt, read `~/.hx/commands/<file>.md` and run it.
+- `/hx <input>` → `hx.md` · `/hx:fix <error>` → `hx-fix.md` · `/hx:pre-pr` → `hx-pre-pr.md`
 - `/hx:test` → `hx-test.md` · `/hx:game <feature>` → `hx-game.md` · `/hx:clean-legacy` → `hx-clean-legacy.md`
-- `/hx:org <fase> <id>` → `hx-org.md` (só com `org_enabled: true`)
+- `/hx:org <phase> <id>` → `hx-org.md` (only with `org_enabled: true`)
 
 ## 9. Codex
-Agentes em `~/.codex/agents/*.toml` (gerados por `sync.py`). Ferramentas: Read→`sed -n`/`cat`, Grep→`rg`, Glob→`rg --files`, Edit/Write→`apply_patch`, Bash→shell, Agent→subagente.
+Agents in `~/.codex/agents/*.toml` (generated by `sync.py`). Tools: Read→`sed -n`/`cat`, Grep→`rg`, Glob→`rg --files`, Edit/Write→`apply_patch`, Bash→shell, Agent→subagent.
 
-## 10. Manutenção
-- `py ~/.hx/scripts/install.py` (1ª vez / módulo org / mods) · `py ~/.hx/scripts/sync.py [--dry-run]` (após editar `~/.hx`).
-- Mods de UI (0 token): `py ~/.hx/scripts/mod.py list|install|remove <nome>`.
-- Windows sem Developer Mode: links viram hardlink/cópia → rode `sync.py` após editar.
+## 10. Maintenance
+- `python3 ~/.hx/scripts/install.py` (first time / org module / mods) · `python3 ~/.hx/scripts/update.py` (new versions) · `python3 ~/.hx/scripts/sync.py [--dry-run]` (after editing `~/.hx`).
+- Token usage: `python3 ~/.hx/scripts/measure.py baseline|sessions`.
+- UI mods (0 tokens): `python3 ~/.hx/scripts/mod.py list|install|remove <name>`.
+- Windows without Developer Mode: links become hardlinks/copies → run `sync.py` after editing.

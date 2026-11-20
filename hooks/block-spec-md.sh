@@ -51,7 +51,7 @@ case "$BASE" in
   design.md|*-design.md|research.md|*-research.md|requirements.md|proposal*.md|\
   notes.md|*-notes.md|todo.md|tasks.md|task-*.md|context.md|*-context.md|context-pack*.md|\
   summary.md|*-summary.md|report.md|*-report.md|progress.md|status.md|handoff*.md|scratch*.md|\
-  checklist*.md|roadmap.md|prd*.md|rfc*.md|adr-*.md|review*.md|test-plan*.md)
+  checklist*.md|roadmap.md|prd*.md|rfc*.md|adr-*.md|review.md|review-*.md|*-review.md|test-plan*.md)
     SPEC_NAME=1 ;;
 esac
 

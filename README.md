@@ -51,7 +51,27 @@ Non-interactive flags: `--no-org`, `--org <url>`, `--mods filetree,hx-skin`, `--
 
 After editing anything in `~/.hx`, run `python3 ~/.hx/scripts/sync.py` (`--dry-run` to preview).
 
-> The rules in `AGENTS.md` are written in Brazilian Portuguese and tell the agent to answer in pt-BR. To use another language, edit section 1 of `AGENTS.md` and run `sync.py`.
+### Updating
+
+No reinstall needed. `update.py` fast-forwards `~/.hx`, pulls the org repos if enabled, re-syncs and validates. Your `config.yaml`, mods and memory are git-ignored and stay untouched.
+
+```bash
+python3 ~/.hx/scripts/update.py --check   # is there a new version?
+python3 ~/.hx/scripts/update.py           # apply it (--autostash if you edited tracked files)
+```
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed.
+
+### Language
+
+Rules ship in English (also the cheapest in tokens). A full Brazilian Portuguese set lives in `i18n/pt-BR/`. The agent always replies in your language either way.
+
+```yaml
+# ~/.hx/config.yaml
+language: pt-BR   # en (default) | pt-BR
+```
+
+Then run `sync.py`. A file missing from a translation falls back to English.
 
 ## Using it in your projects: nothing to configure
 
@@ -195,6 +215,16 @@ python3 ~/.hx/scripts/install.py --org git@github.com:acme/hx-preset.git
 
 The preset and the flow repo are cloned into `~/.hx/vendor/` (git-ignored) and refreshed in the background every `auto_update_days`. Outside company repos, org mode turns itself off.
 
+## Measuring tokens
+
+```bash
+python3 ~/.hx/scripts/measure.py baseline --lang all     # what HX adds to context
+python3 ~/.hx/scripts/measure.py sessions --days 7       # real usage from local transcripts
+python3 ~/.hx/scripts/measure.py sessions --project my-api --tool claude --json
+```
+
+`baseline` estimates the always-loaded part (`AGENTS.md` + agent/command descriptions, about 1.6k tokens) and each on-demand file. `sessions` sums the usage recorded by Claude Code (`~/.claude/projects`) and Codex (`~/.codex/sessions`) per project: uncached input, cache writes, cache reads, output and cache hit rate. Nothing leaves your machine.
+
 ## Layout
 
 ```text
@@ -203,8 +233,10 @@ The preset and the flow repo are cloned into `~/.hx/vendor/` (git-ignored) and r
 ├── agents/              6 agents → .md (Claude) and .toml (Codex)
 ├── commands/            /hx and subcommands
 ├── skills/              core · quality · stack · gamedev (on demand)
-├── hooks/               block-spec-md · org-only · strip-legacy-oc
-├── scripts/             install · sync · gate · mod · check_updates
+├── i18n/pt-BR/          full Brazilian Portuguese rule set
+├── hooks/               block-spec-md · read-guard · org-only · strip-legacy-oc
+├── scripts/             install · update · sync · gate · measure · mod · check_updates
+├── tests/               unittest suite (run in CI on Ubuntu and Windows)
 ├── mods/                catalog + hx-skin
 ├── docs/                translations
 └── vendor/              (local) private org module
@@ -214,9 +246,18 @@ The preset and the flow repo are cloned into `~/.hx/vendor/` (git-ignored) and r
 
 - Short answers; never repeat code already on disk, cite `file:line`.
 - Context: code graph → memory by query → surgical reads. No repo-wide scans.
+- Enforced by hooks, not only by prompt: no intermediate plan/spec `.md` (`block-spec-md.sh`), no whole-file read over 400 lines (`read-guard.sh`; bypass `HX_ALLOW_READ=1`).
 - Library docs via Context7 before guessing an API.
 - Conventional commits; commit, push and PR only after confirmation.
 - Bugs: root cause before editing; 3 failed attempts → stop and report.
+
+## Development
+
+```bash
+python3 -m unittest discover -s tests -t tests
+```
+
+The suite runs sync, update and the hooks inside a throwaway sandbox (its own `HX_HOME`, Claude and Codex homes), so it never touches your real install.
 
 ## License
 

@@ -1,27 +1,27 @@
 # Skill: security-check
-Checagem focada SÓ nas linhas do diff. Saída no formato do `reviewer`.
+Check ONLY the diff lines. Output in the `reviewer` format.
 
-## 1. Secrets vazados
+## 1. Leaked secrets
 `git diff HEAD -U0 | rg -n '^\+' | rg -i '(api[_-]?key|secret|token|passw|private[_-]?key|BEGIN [A-Z ]*PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|xox[bpa]-|sk-[A-Za-z0-9_-]{20,}|mongodb(\+srv)?://[^ ]*:[^ ]*@|postgres(ql)?://[^ ]*:[^ ]*@)'`
-Também: `.env`, `*.pem`, `*.key`, `credentials*.json` adicionados ao git.
+Also: `.env`, `*.pem`, `*.key`, `credentials*.json` added to git.
 
 ## 2. Injection
-- SQL: concatenação/template string em query (`` `SELECT ... ${x}` ``, f-string, `$queryRawUnsafe`, `.raw(` com input).
-- NoSQL: objeto de request direto em filtro Mongo (`find(req.body)`, `$where`, operadores `$` vindos do usuário).
-- Shell: `exec`/`spawn` com `shell: true`, `os.system`, `subprocess(..., shell=True)` com input.
-- Path traversal: input do usuário em caminho de arquivo sem normalizar/validar.
+- SQL: concatenation/template strings in queries (`` `SELECT ... ${x}` ``, f-strings, `$queryRawUnsafe`, `.raw(` with input).
+- NoSQL: request object straight into a Mongo filter (`find(req.body)`, `$where`, `$` operators coming from the user).
+- Shell: `exec`/`spawn` with `shell: true`, `os.system`, `subprocess(..., shell=True)` with input.
+- Path traversal: user input in a file path without normalizing/validating.
 
 ## 3. XSS
-`dangerouslySetInnerHTML`, `innerHTML`, `v-html`, `| safe`, `Markup(` com dado externo; URL `javascript:` em `href`.
+`dangerouslySetInnerHTML`, `innerHTML`, `v-html`, `| safe`, `Markup(` with external data; `javascript:` URLs in `href`.
 
-## 4. Validação de input
-Rota/handler/consumer novo sem schema (DTO, zod, Pydantic). Tipos/limites (tamanho, enum, range) ausentes.
+## 4. Input validation
+New route/handler/consumer without a schema (DTO, zod, Pydantic). Missing types/limits (size, enum, range).
 
-## 5. Permissões
-Endpoint novo sem guard/auth/middleware; checagem de ownership (IDOR) ausente; role hardcoded; CORS `*` com credenciais.
+## 5. Permissions
+New endpoint without guard/auth/middleware; missing ownership check (IDOR); hardcoded role; CORS `*` with credentials.
 
-## 6. Diversos
-Erro devolvendo stack/SQL ao cliente; log com PII/token; `verify=False`/`rejectUnauthorized: false`; crypto fraca (md5/sha1 para senha).
+## 6. Misc
+Errors returning stack/SQL to the client; logs with PII/tokens; `verify=False`/`rejectUnauthorized: false`; weak crypto (md5/sha1 for passwords).
 
-## Saída
-`arquivo:linha — <categoria>: <problema> → <correção curta>` ou nada (sem achados).
+## Output
+`file:line — <category>: <problem> → <short fix>` or nothing (no findings).

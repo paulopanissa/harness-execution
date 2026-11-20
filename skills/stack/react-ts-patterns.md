@@ -1,33 +1,33 @@
 # Skill: react-ts-patterns
-Ler só em dúvida. Padrão do repo vence esta lista.
+Read only when in doubt. The repo's pattern beats this list.
 
-## Componentes
-- Função + props tipadas (`type Props = {...}`); sem `React.FC` se o repo não usa.
-- Componente > ~150 linhas ou com 2+ responsabilidades → extrair subcomponente/hook.
-- Composição (children/slots) antes de props booleanas em cascata.
-- Keys estáveis (id), nunca índice em lista mutável.
+## Components
+- Function + typed props (`type Props = {...}`); no `React.FC` if the repo does not use it.
+- Component > ~150 lines or with 2+ responsibilities → extract a subcomponent/hook.
+- Composition (children/slots) before cascades of boolean props.
+- Stable keys (id), never the index in a mutable list.
 
 ## Hooks
-- Estado derivado = calcular no render (ou `useMemo` se caro), não `useEffect` + `setState`.
-- `useEffect` só para sincronizar com externo; deps completas; cleanup.
-- Lógica reutilizável → hook `useXxx` com retorno tipado.
-- `useCallback`/`useMemo` só com motivo (prop de memo, dep de effect, custo real).
+- Derived state = compute during render (or `useMemo` if expensive), not `useEffect` + `setState`.
+- `useEffect` only to sync with something external; complete deps; cleanup.
+- Reusable logic → `useXxx` hook with a typed return.
+- `useCallback`/`useMemo` only with a reason (memo prop, effect dep, real cost).
 
-## Dados
-- Server state: React Query/SWR/Server Components conforme repo; não duplicar em store global.
-- Next.js App Router: buscar no server component; client só para interação. Server Actions validam input (zod).
-- Loading/erro/vazio sempre tratados.
+## Data
+- Server state: React Query/SWR/Server Components per the repo; do not duplicate it in a global store.
+- Next.js App Router: fetch in server components; client only for interaction. Server Actions validate input (zod).
+- Always handle loading/error/empty.
 
-## Estilo
-- Tailwind: tokens do tema; `cn()`/`clsx` para condicionais; sem valor mágico arbitrário se existir token.
-- Reusar design system (`components/ui`) antes de criar.
+## Style
+- Tailwind: theme tokens; `cn()`/`clsx` for conditionals; no arbitrary magic value when a token exists.
+- Reuse the design system (`components/ui`) before creating.
 
 ## Forms
-- `react-hook-form` + `zod` se o repo usa; mensagens de erro acessíveis (`aria-describedby`).
+- `react-hook-form` + `zod` if the repo uses them; accessible error messages (`aria-describedby`).
 
-## Segurança/A11y
-- Sem `dangerouslySetInnerHTML` com dado externo; sem secret em `NEXT_PUBLIC_*`.
-- Elementos semânticos, `label`, `alt`, foco visível, navegação por teclado.
+## Security/A11y
+- No `dangerouslySetInnerHTML` with external data; no secrets in `NEXT_PUBLIC_*`.
+- Semantic elements, `label`, `alt`, visible focus, keyboard navigation.
 
-## Testes
-- Testing Library: `getByRole`/`findByText`, `userEvent`. MSW para HTTP se o repo usa.
+## Tests
+- Testing Library: `getByRole`/`findByText`, `userEvent`. MSW for HTTP if the repo uses it.

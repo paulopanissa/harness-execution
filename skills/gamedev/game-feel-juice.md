@@ -1,30 +1,30 @@
 # Skill: game-feel-juice
-Valores iniciais; ajuste por playtest. Tudo configurável (não hardcoded).
+Starting values; tune by playtest. Everything configurable (not hardcoded).
 
-## Controle
-- **Coyote time**: pulo permitido 80–120 ms após sair da borda.
-- **Input buffer**: guardar pulo/ataque 100–150 ms e executar quando possível.
-- **Pulo variável**: soltar botão → multiplicar velocidade vertical por 0.4–0.5.
-- **Gravidade de queda** 1.5–2.5× a de subida; apex hang (gravidade reduzida perto do topo).
-- Aceleração/desaceleração separadas; turn-around mais rápido que aceleração.
-- Corner correction: empurrar 2–4 px ao bater quina no pulo.
+## Control
+- **Coyote time**: jump allowed 80–120 ms after leaving the edge.
+- **Input buffer**: store jump/attack for 100–150 ms and run it when possible.
+- **Variable jump**: releasing the button → multiply vertical velocity by 0.4–0.5.
+- **Fall gravity** 1.5–2.5× the rising gravity; apex hang (reduced gravity near the top).
+- Separate acceleration/deceleration; turn-around faster than acceleration.
+- Corner correction: nudge 2–4 px when clipping a corner on a jump.
 
-## Impacto
-- **Hitstop**: 40–100 ms congelando atacante e alvo (escala com dano). Implementar via escala de tempo local, não `sleep`.
-- **Screen shake**: trauma 0–1, offset = trauma² × max; decai por tempo; ruído (Perlin), não random puro.
-- Knockback com direção do golpe; i-frames 0.5–1 s com blink.
-- Flash branco 1–2 frames no hit (shader/uniform).
+## Impact
+- **Hitstop**: 40–100 ms freezing attacker and target (scales with damage). Implement via local time scale, not `sleep`.
+- **Screen shake**: trauma 0–1, offset = trauma² × max; decays over time; noise (Perlin), not pure random.
+- Knockback along the hit direction; i-frames 0.5–1 s with blink.
+- White flash for 1–2 frames on hit (shader/uniform).
 
-## Feedback visual
-- Squash & stretch em pulo/aterrisagem (10–20%).
-- Partículas no pulo, aterrisagem, hit, morte (via pool).
-- Easing (out-back, out-elastic) em UI e coletáveis; nada linear.
-- Números de dano/combo com pop + fade.
+## Visual feedback
+- Squash & stretch on jump/landing (10–20%).
+- Particles on jump, landing, hit, death (via pool).
+- Easing (out-back, out-elastic) on UI and collectibles; nothing linear.
+- Damage/combo numbers with pop + fade.
 
-## Feedback sonoro
-- Som para TODA ação do jogador. Variação de pitch ±5–10% em sons repetidos.
-- Camadas: ataque + impacto + material. Ducking de música em eventos grandes.
-- Limitar vozes simultâneas do mesmo som (2–4).
+## Audio feedback
+- A sound for EVERY player action. Pitch variation ±5–10% on repeated sounds.
+- Layers: attack + impact + material. Duck the music on big events.
+- Limit simultaneous voices of the same sound (2–4).
 
-## Checklist por feature
-Entrada responde no mesmo frame? Tem som? Tem partícula/tween? Tem hitstop/shake proporcional? Desligável (acessibilidade: reduzir shake/flash)?
+## Per-feature checklist
+Does input respond on the same frame? Has sound? Has particle/tween? Has proportional hitstop/shake? Can it be turned off (accessibility: reduce shake/flash)?

@@ -1,34 +1,34 @@
 # Skill: game-perf-budget
-Meta: 60 FPS estável = 16.6 ms/frame (120 FPS = 8.3 ms). Medir antes de otimizar.
+Goal: stable 60 FPS = 16.6 ms/frame (120 FPS = 8.3 ms). Measure before optimizing.
 
-## Budget sugerido (60 FPS)
-| Fase | ms |
+## Suggested budget (60 FPS)
+| Phase | ms |
 |---|---|
 | Input + gameplay | 3 |
-| Física | 3 |
-| IA/pathfinding | 2 |
-| Animação | 1.5 |
+| Physics | 3 |
+| AI/pathfinding | 2 |
+| Animation | 1.5 |
 | Render (CPU) | 4 |
-| Áudio + UI | 1 |
-| Folga | 2 |
+| Audio + UI | 1 |
+| Headroom | 2 |
 
-## Zero-alloc no update/tick
-- Proibido no loop: `new`, literais de array/objeto, closures/lambdas, concatenação de string, boxing, LINQ, `GetComponent`/`find` por nome, `instantiate`/`queue_free` em massa.
-- Pré-alocar buffers e reutilizar (`clear()` em vez de recriar). Vetores temporários como campos.
-- Cache de referências no init. Strings de UI só ao mudar valor.
-- JS/TS: evitar `map/filter` no loop quente; `for` indexado; objetos com forma estável.
+## Zero-alloc in update/tick
+- Forbidden in the loop: `new`, array/object literals, closures/lambdas, string concatenation, boxing, LINQ, `GetComponent`/`find` by name, mass `instantiate`/`queue_free`.
+- Pre-allocate buffers and reuse them (`clear()` instead of recreating). Temporary vectors as fields.
+- Cache references at init. UI strings only when the value changes.
+- JS/TS: avoid `map/filter` in the hot loop; indexed `for`; objects with a stable shape.
 
 ## Object pooling
-- Pool por tipo, tamanho pré-aquecido no load; `acquire()/release()` reseta estado.
-- Pool esgotado → expandir em lote fora do frame crítico ou reciclar o mais antigo; logar em debug.
+- One pool per type, pre-warmed at load; `acquire()/release()` resets state.
+- Pool exhausted → grow in batch outside the critical frame or recycle the oldest; log in debug.
 
-## Outras regras
-- Física: passo fixo; camadas/máscaras de colisão; broadphase; sem raycast por entidade por frame se dá para fatiar.
-- IA: time-slicing (N agentes por frame); pathfinding assíncrono/cacheado.
-- Render: batching/instancing, atlas, culling, LOD; minimizar draw calls e trocas de material.
-- Update só do que está visível/ativo; dormir entidades distantes.
+## Other rules
+- Physics: fixed step; collision layers/masks; broadphase; no per-entity raycast per frame when it can be sliced.
+- AI: time-slicing (N agents per frame); async/cached pathfinding.
+- Render: batching/instancing, atlases, culling, LOD; minimize draw calls and material switches.
+- Update only what is visible/active; sleep distant entities.
 
-## Medição
-- Profiler da engine (Godot Monitor/Profiler, Unity Profiler + Memory, Chrome Performance para web).
-- Checar GC/alloc por frame = 0 em gameplay normal.
-- Testar no hardware-alvo mais fraco; registrar ms por fase antes/depois.
+## Measuring
+- Engine profiler (Godot Monitor/Profiler, Unity Profiler + Memory, Chrome Performance for web).
+- Check GC/alloc per frame = 0 in normal gameplay.
+- Test on the weakest target hardware; record ms per phase before/after.

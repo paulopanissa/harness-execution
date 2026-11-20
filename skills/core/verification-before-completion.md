@@ -1,12 +1,12 @@
 # Skill: verification-before-completion
-Proibido declarar "pronto", "feito", "corrigido" ou "passa" sem evidência fresca.
+Never claim "done", "fixed" or "passing" without fresh evidence.
 
-## Regra
-1. Rode `bash ~/.hx/scripts/gate.sh` APÓS a última edição desta rodada.
-2. Só conta `exit 0` com saída `GATE: PASS` (ou `GATE: PASS (...)`).
-3. Output de rodada anterior, de outro agente ou "deve passar" não conta.
-4. `GATE: PASS (nenhum checker aplicável)` → diga explicitamente que não houve verificação automática e liste o teste manual feito.
-5. Falhou → não declare pronto. Corrija (máx. 2) ou reporte o FAIL com as linhas do gate.
+## Rule
+1. Run `bash ~/.hx/scripts/gate.sh` AFTER the last edit of this round.
+2. Only `exit 0` with output `GATE: PASS` (or `GATE: PASS (...)`) counts.
+3. Output from an earlier round, another agent, or "should pass" does not count.
+4. `GATE: PASS (no applicable checker)` → say explicitly that nothing was verified automatically and list the manual check done.
+5. Failed → do not claim done. Fix (max 2) or report the FAIL with the gate lines.
 
-## Relato final
-`GATE: PASS` + lista `arquivo:linha` alterados. Nada de "tudo funcionando" sem o gate.
+## Final report
+`GATE: PASS` + list of changed `file:line`. No "everything works" without the gate.

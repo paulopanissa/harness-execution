@@ -1,34 +1,34 @@
 # Skill: node-ts-patterns
-Ler só em dúvida. Padrão do repo vence esta lista.
+Read only when in doubt. The repo's pattern beats this list.
 
-## Estrutura (NestJS)
-- Módulo por domínio: `controller` (HTTP fino) → `service` (regra) → `repository`/Prisma (dados).
-- DTO de entrada com `class-validator` + `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })`.
-- Guards para auth/roles; interceptors para logging/serialização; filtros de exceção globais.
-- Config via `ConfigService` + schema validado no boot.
+## Structure (NestJS)
+- One module per domain: `controller` (thin HTTP) → `service` (rules) → `repository`/Prisma (data).
+- Input DTO with `class-validator` + `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })`.
+- Guards for auth/roles; interceptors for logging/serialization; global exception filters.
+- Config via `ConfigService` + schema validated at boot.
 
 ## TypeScript
-- `strict: true`. Sem `any` novo → `unknown` + narrowing.
-- Retorno explícito em exportadas. `readonly` em props de DTO/entidade.
-- Erros de domínio tipados (`class NotFoundError extends DomainError`), mapeados para HTTP no filtro.
-- Imutabilidade: spread/`map`, não mutar argumentos.
+- `strict: true`. No new `any` → `unknown` + narrowing.
+- Explicit return types on exports. `readonly` on DTO/entity props.
+- Typed domain errors (`class NotFoundError extends DomainError`), mapped to HTTP in the filter.
+- Immutability: spread/`map`, never mutate arguments.
 
 ## Prisma
-- `select`/`include` explícitos; nunca devolver entidade crua com campos sensíveis.
-- Múltiplas escritas → `prisma.$transaction`. Paginação com `take`/`cursor`.
-- N+1: buscar em lote (`where: { id: { in } }`). Raw só `$queryRaw` tagged (nunca `Unsafe` com input).
-- Migration nova → revisar `DROP`/`NOT NULL` sem default.
+- Explicit `select`/`include`; never return a raw entity with sensitive fields.
+- Multiple writes → `prisma.$transaction`. Paginate with `take`/`cursor`.
+- N+1: fetch in batch (`where: { id: { in } }`). Raw only via tagged `$queryRaw` (never `Unsafe` with input).
+- New migration → review `DROP`/`NOT NULL` without default.
 
 ## APIs
-- Status: 201 create, 204 sem corpo, 400 validação, 401/403 auth, 404, 409 conflito.
-- Idempotency-Key em POST de pagamento/efeito externo.
-- Timeouts + retry com backoff em HTTP externo; circuit breaker se o repo tiver.
+- Status: 201 create, 204 no body, 400 validation, 401/403 auth, 404, 409 conflict.
+- Idempotency-Key on POSTs for payments/external side effects.
+- Timeouts + retry with backoff on external HTTP; circuit breaker if the repo has one.
 
-## Filas (BullMQ/SQS/Rabbit/Kafka)
-- Handler idempotente (chave de dedupe). Ack só após sucesso.
-- Retry exponencial + DLQ. Payload versionado e validado.
-- Sem trabalho pesado no request HTTP → enfileirar.
+## Queues (BullMQ/SQS/Rabbit/Kafka)
+- Idempotent handler (dedupe key). Ack only after success.
+- Exponential retry + DLQ. Versioned, validated payload.
+- No heavy work inside the HTTP request → enqueue.
 
-## Testes
-- Jest/Vitest: `Test.createTestingModule` com providers reais da unidade e mocks só de I/O.
-- e2e só se o repo já tem `test/*.e2e-spec.ts`.
+## Tests
+- Jest/Vitest: `Test.createTestingModule` with the unit's real providers and mocks only for I/O.
+- e2e only if the repo already has `test/*.e2e-spec.ts`.

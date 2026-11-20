@@ -51,6 +51,28 @@ Flags para rodar sem perguntas: `--no-org`, `--org <url>`, `--mods filetree,hx-s
 
 Depois de editar qualquer coisa em `~/.hx`, rode `python3 ~/.hx/scripts/sync.py` (`--dry-run` para ver antes).
 
+### Atualizando
+
+Não precisa reinstalar. O `update.py` faz fast-forward em `~/.hx`, atualiza os repos org (se ativos), sincroniza e valida. `config.yaml`, mods e memória ficam fora do git e não são tocados.
+
+```bash
+python3 ~/.hx/scripts/update.py --check   # tem versão nova?
+python3 ~/.hx/scripts/update.py           # aplica (--autostash se você editou arquivos versionados)
+```
+
+O que mudou: [CHANGELOG.md](../CHANGELOG.md).
+
+### Idioma
+
+As regras vêm em inglês (também o mais barato em tokens). O conjunto completo em português fica em `i18n/pt-BR/`. Nos dois casos o agente responde no seu idioma.
+
+```yaml
+# ~/.hx/config.yaml
+language: pt-BR   # en (padrão) | pt-BR
+```
+
+Depois rode `sync.py`. Arquivo sem tradução cai para o inglês.
+
 ## Usando nos seus projetos: nada para configurar
 
 O HX mora **na sua máquina**, não nos repositórios. O instalador liga o `AGENTS.md` como seu `~/.claude/CLAUDE.md` global e `~/.codex/AGENTS.md`, e coloca o `/hx` nos comandos de usuário. Então:
@@ -193,6 +215,16 @@ Usa Obsidian? Troque por um MCP de memória que grava no vault, como [mem-vault]
 
 Funciona igual, só que mais caro. A memória vai para `~/.hx/fallback-memory.jsonl`, uma linha JSON por fato, e é buscada com `rg`.
 
+## Medindo tokens
+
+```bash
+python3 ~/.hx/scripts/measure.py baseline --lang all     # quanto o HX adiciona ao contexto
+python3 ~/.hx/scripts/measure.py sessions --days 7       # uso real pelos transcripts locais
+python3 ~/.hx/scripts/measure.py sessions --project minha-api --tool claude --json
+```
+
+`baseline` estima a parte sempre carregada (`AGENTS.md` + descrições de agentes/comandos, cerca de 1,6k tokens) e cada arquivo sob demanda. `sessions` soma o uso gravado pelo Claude Code (`~/.claude/projects`) e pelo Codex (`~/.codex/sessions`) por projeto: input sem cache, escrita e leitura de cache, output e taxa de acerto do cache. Nada sai da sua máquina.
+
 ## Estrutura
 
 ```text
@@ -201,8 +233,10 @@ Funciona igual, só que mais caro. A memória vai para `~/.hx/fallback-memory.js
 ├── agents/              6 agentes → .md (Claude) e .toml (Codex)
 ├── commands/            /hx e subcomandos
 ├── skills/              core · quality · stack · gamedev (sob demanda)
-├── hooks/               block-spec-md · org-only · strip-legacy-oc
-├── scripts/             install · sync · gate · mod · check_updates
+├── i18n/pt-BR/          conjunto completo de regras em português
+├── hooks/               block-spec-md · read-guard · org-only · strip-legacy-oc
+├── scripts/             install · update · sync · gate · measure · mod · check_updates
+├── tests/               suíte unittest (roda no CI em Ubuntu e Windows)
 ├── mods/                catálogo + hx-skin
 └── vendor/              (local) módulo org privado
 ```
@@ -211,11 +245,18 @@ Funciona igual, só que mais caro. A memória vai para `~/.hx/fallback-memory.js
 
 - Respostas curtas; nunca repetir código já salvo, citar `arquivo:linha`.
 - Contexto: grafo de código → memória por query → leitura cirúrgica. Nada de varrer o repo inteiro.
+- Garantido por hook, não só por prompt: nada de `.md` intermediário de plano/spec (`block-spec-md.sh`) nem leitura inteira de arquivo com mais de 400 linhas (`read-guard.sh`; bypass `HX_ALLOW_READ=1`).
 - Docs de biblioteca via Context7 antes de chutar API.
 - Conventional commits; commit, push e PR só com confirmação.
 - Bug: causa raiz antes de editar; 3 tentativas falhas → para e reporta.
 
-As regras estão em português, mas são fáceis de adaptar: edite `AGENTS.md` e rode `sync.py`.
+## Desenvolvimento
+
+```bash
+python3 -m unittest discover -s tests -t tests
+```
+
+A suíte roda sync, update e os hooks num sandbox descartável (`HX_HOME`, Claude e Codex próprios), sem tocar na sua instalação real.
 
 ## Licença
 
