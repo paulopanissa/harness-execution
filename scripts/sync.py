@@ -43,6 +43,7 @@ HOOK_MARK_SPEC = "block-spec-md.sh"
 HOOK_MARK_UPDATE = "check_updates.py"
 HOOK_MARK_ORG = "org-only.sh"
 HOOK_MARK_READ = "read-guard.sh"
+HOOK_MARK_GRAPHIFY = "graphify-setup.sh"
 
 CODEX_TOOL_MAP = {
     "Read": "shell (`sed -n`/`cat`)",
@@ -310,6 +311,8 @@ def sync_settings(ctx: Ctx) -> None:
         settings = _add_hook(settings, "PreToolUse", "Write|Edit|MultiEdit", f'bash "{hooks_dir}/{HOOK_MARK_SPEC}"', 10)
     if not _has_hook(settings, "PreToolUse", HOOK_MARK_READ):
         settings = _add_hook(settings, "PreToolUse", "Read", f'bash "{hooks_dir}/{HOOK_MARK_READ}"', 10)
+    if not _has_hook(settings, "SessionStart", HOOK_MARK_GRAPHIFY):
+        settings = _add_hook(settings, "SessionStart", None, f'bash "{hooks_dir}/{HOOK_MARK_GRAPHIFY}"', 5)
 
     org = bool(ctx.cfg.get("org_enabled"))
     if org and not _has_hook(settings, "SessionStart", HOOK_MARK_UPDATE):

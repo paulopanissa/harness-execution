@@ -14,7 +14,7 @@ Versão pt-BR de `~/.hx/AGENTS.md` (ativa com `language: pt-BR` no `config.yaml`
 - Não implemente o que não foi pedido; ideia de melhoria → pergunte.
 
 ## 2. Hierarquia de contexto (obrigatória)
-1. **Graphify** — símbolos, dependências, chamadas.
+1. **Graphify** — símbolos, dependências, chamadas (`graphify-out/`, gerado pelo hook `graphify-setup.sh`; ausente → fallback).
 2. **ai-memory** — busca por query. NUNCA ler o vault inteiro do Obsidian.
 3. Leitura cirúrgica: só arquivos/linhas do Context Pack.
 - Fallback (Graphify/ai-memory fora): `rg` restrito ao módulo alvo + `rg -i <termo> ~/.hx/fallback-memory.jsonl`.
