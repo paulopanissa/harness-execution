@@ -44,7 +44,7 @@ export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'hx-skin',
-      description: `Troca a skin HX (${NAMES.join(' | ')})`,
+      description: `Switch the HX skin (${NAMES.join(' | ')})`,
       argumentHint: NAMES.join('|'),
     })
     const set = await $.theme.set(lookFor(asSkin(await $.store.get(STORE_KEY))))
@@ -57,13 +57,13 @@ export const register: Register = on => {
   on('command.run', { command: 'hx-skin' }, async ($, e) => {
     const wanted = e.args.trim().toLowerCase()
     if (!wanted) {
-      return { text: `Skin atual: ${asSkin(await $.store.get(STORE_KEY))}. Opções: ${NAMES.join(', ')}` }
+      return { text: `Current skin: ${asSkin(await $.store.get(STORE_KEY))}. Options: ${NAMES.join(', ')}` }
     }
     if (!(wanted in SKINS)) {
-      return { text: `Skin desconhecida: ${wanted}. Opções: ${NAMES.join(', ')}` }
+      return { text: `Unknown skin: ${wanted}. Options: ${NAMES.join(', ')}` }
     }
     await $.store.set(STORE_KEY, wanted)
     const set = await $.theme.set(lookFor(wanted))
-    return { text: set.isDrawn ? `Skin ${wanted} aplicada.` : `Skin ${wanted} salva; ${set.reason}` }
+    return { text: set.isDrawn ? `Skin ${wanted} applied.` : `Skin ${wanted} saved; ${set.reason}` }
   })
 }

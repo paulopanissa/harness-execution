@@ -1,6 +1,8 @@
 # hx-skin
 
-Skins do HX para o Claude Code: **Dusk** (Drácula refinado, contraste AA), **Ember** (quente) e **Tide** (frio), cada uma com variante clara e escura.
+HX skins for Claude Code: **Dusk** (a refined Dracula with AA contrast), **Ember** (warm) and **Tide** (cool), each with light and dark variants.
 
-- `/hx-skin` mostra a skin atual; `/hx-skin dusk|ember|tide` troca e lembra entre sessões.
-- Custo de tokens: zero. O tema roda na interface, nada vai para o modelo.
+- `/hx-skin` shows the current skin; `/hx-skin dusk|ember|tide` switches and remembers it across sessions.
+- Token cost: zero. The theme runs in the interface; nothing is sent to the model.
+
+Install: `python3 ~/.hx/scripts/mod.py install hx-skin`

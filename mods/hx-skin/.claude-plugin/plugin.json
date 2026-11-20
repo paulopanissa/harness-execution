@@ -1,6 +1,6 @@
 {
   "name": "hx-skin",
   "version": "0.1.0",
-  "description": "Skins HX (Dusk, Ember, Tide) para o Claude Code; /hx-skin troca",
+  "description": "HX skins (Dusk, Ember, Tide) for Claude Code; /hx-skin switches",
   "license": "MIT"
 }

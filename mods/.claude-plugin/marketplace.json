@@ -2,6 +2,6 @@
   "name": "hx-mods",
   "owner": { "name": "paulopanissa" },
   "plugins": [
-    { "name": "hx-skin", "source": "./hx-skin", "description": "Skins HX (Dusk, Ember, Tide); /hx-skin troca" }
+    { "name": "hx-skin", "source": "./hx-skin", "description": "HX skins (Dusk, Ember, Tide); /hx-skin switches" }
   ]
 }

@@ -1,10 +1,10 @@
 {
-  "$comment": "Catálogo de mods HX. Todos são opcionais: install.py/mod.py oferece e o usuário escolhe. tokens=0 → roda só na interface.",
+  "$comment": "HX mods catalog. All optional: install.py/mod.py offers them and the user picks. tokens=0 means UI-only, nothing reaches the model.",
   "claude": [
     {
       "id": "filetree",
       "name": "File Tree",
-      "description": "Painel com a árvore de arquivos que o agente lê/edita, ao vivo",
+      "description": "Live pane with the tree of files the agent reads/edits",
       "kind": "plugin",
       "marketplace": "data-goblin/claude-code-filetree",
       "plugin": "filetree@claude-code-filetree",
@@ -14,7 +14,7 @@
     {
       "id": "blast-radius",
       "name": "Blast Radius",
-      "description": "Mostra o raio de impacto de cada edição (arquivos e dependentes afetados)",
+      "description": "Shows the blast radius of each edit (affected files and dependents)",
       "kind": "plugin",
       "marketplace": "hamzafer/claude-code-mods",
       "plugin": "blast-radius@claude-code-mods",
@@ -24,7 +24,7 @@
     {
       "id": "savvy-progress",
       "name": "Savvy Progress",
-      "description": "Barra de progresso do turno acima do prompt",
+      "description": "Turn progress bar above the prompt",
       "kind": "plugin",
       "marketplace": "Berkay2002/berkays-mods",
       "plugin": "savvy-progress@berkays-mods",
@@ -34,7 +34,7 @@
     {
       "id": "hx-skin",
       "name": "HX Skin",
-      "description": "Skins Dusk (Drácula refinado), Ember e Tide; /hx-skin troca",
+      "description": "Dusk (refined Dracula), Ember and Tide skins; /hx-skin switches",
       "kind": "plugin",
       "marketplace": "{HX_HOME}/mods",
       "plugin": "hx-skin@hx-mods",
@@ -42,16 +42,16 @@
     },
     {
       "id": "claude-skins",
-      "name": "Claude Skins (comunidade)",
-      "description": "Pacote de skins da comunidade; instalação manual via install.sh",
+      "name": "Claude Skins (community)",
+      "description": "Community skin pack; manual install via install.sh",
       "kind": "manual",
       "url": "https://github.com/basicScandal/claude-skins",
       "steps": [
         "git clone https://github.com/basicScandal/claude-skins",
-        "leia o install.sh antes de rodar: ele edita ~/.claude/settings.json",
-        "as 'personalities' injetam texto no prompt e custam tokens; as skins visuais não"
+        "read install.sh before running it: it edits ~/.claude/settings.json",
+        "'personalities' inject prompt text and cost tokens; visual skins do not"
       ],
-      "tokens": "personalities custam tokens"
+      "tokens": "personalities cost tokens"
     }
   ],
   "codex": []
