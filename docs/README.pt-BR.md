@@ -51,6 +51,17 @@ Flags para rodar sem perguntas: `--no-org`, `--org <url>`, `--mods filetree,hx-s
 
 Depois de editar qualquer coisa em `~/.hx`, rode `python3 ~/.hx/scripts/sync.py` (`--dry-run` para ver antes).
 
+## Usando nos seus projetos: nada para configurar
+
+O HX mora **na sua máquina**, não nos repositórios. O instalador liga o `AGENTS.md` como seu `~/.claude/CLAUDE.md` global e `~/.codex/AGENTS.md`, e coloca o `/hx` nos comandos de usuário. Então:
+
+- abra qualquer projeto (novo, clonado ou importado) e digite `/hx <tarefa>`; funciona direto;
+- você **não** adiciona nada no `CLAUDE.md`, `.claude/` ou `.codex/` do projeto;
+- nada do HX é commitado no projeto, e quem não usa HX não é afetado;
+- o `CLAUDE.md` do próprio projeto continua valendo para regras de domínio (stack, comandos, estilo).
+
+Também não precisa editar `~/.claude.json` ou `settings.json` na mão: o `sync.py` mescla os hooks necessários e guarda backup.
+
 ## Fluxo
 
 ```text

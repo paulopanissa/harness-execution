@@ -53,6 +53,17 @@ After editing anything in `~/.hx`, run `python3 ~/.hx/scripts/sync.py` (`--dry-r
 
 > The rules in `AGENTS.md` are written in Brazilian Portuguese and tell the agent to answer in pt-BR. To use another language, edit section 1 of `AGENTS.md` and run `sync.py`.
 
+## Using it in your projects: nothing to configure
+
+HX lives on **your machine**, not in your repositories. The installer links `AGENTS.md` as your global `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`, and puts `/hx` in your user commands. So:
+
+- open any project (new, cloned, or imported) and type `/hx <task>`; it just works;
+- you do **not** add anything to the project's `CLAUDE.md`, `.claude/` or `.codex/`;
+- nothing from HX is committed to the project, and teammates without HX are not affected;
+- the project's own `CLAUDE.md` still applies for domain rules (stack, commands, code style).
+
+You do not need to edit `~/.claude.json` or `settings.json` by hand either: `sync.py` merges the hooks it needs and keeps a backup.
+
 ## Context setup: Graphify + ai-memory (recommended)
 
 `AGENTS.md` tells the agent to gather context in this order: **Graphify → ai-memory → surgical reads**. Both tools are optional. Without them HX falls back to a module-scoped `rg` plus `~/.hx/fallback-memory.jsonl`, which works but costs more tokens.
