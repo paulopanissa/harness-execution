@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -91,6 +92,137 @@ class OrgOnlyTest(unittest.TestCase):
             check = subprocess.run([BASH, str(REPO / "hooks" / "org-only.sh"), "--check", raw],
                                    env=env, capture_output=True, text=True, check=False)
             self.assertEqual(check.returncode, 1)
+
+
+FAKE_GRAPHIFY = """#!/usr/bin/env bash
+# graphify falso: registra as chamadas; FAKE_GRAPHIFY_FAIL=1 faz tudo falhar.
+printf '%s\\n' "$*" >>"$FAKE_GRAPHIFY_CALLS"
+[ "${FAKE_GRAPHIFY_FAIL:-0}" = "1" ] && { echo boom >&2; exit 1; }
+hook="$(git rev-parse --git-path hooks/post-commit)"
+case "$1 ${2:-}" in
+  "hook status") if grep -qs graphify-hook-start "$hook"; then echo "post-commit: installed"; else echo "post-commit: not installed"; fi ;;
+  "hook install") mkdir -p "$(dirname "$hook")"; printf '#!/bin/sh\\n# graphify-hook-start\\n' >"$hook" ;;
+  "extract "*) mkdir -p "$2/graphify-out" && echo '{}' >"$2/graphify-out/graph.json" ;;
+esac
+exit 0
+"""
+
+
+@unittest.skipUnless(BASH, "bash not available")
+class GraphifySetupTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        tmp = Path(self._tmp.name)
+        self.hx, self.repo, self.bin = tmp / "hx", tmp / "repo", tmp / "bin"
+        for d in (self.hx, self.repo, self.bin):
+            d.mkdir()
+        subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
+        self.calls = tmp / "calls.txt"
+        fake = self.bin / "graphify"
+        fake.write_text(FAKE_GRAPHIFY, encoding="utf-8", newline="\n")
+        fake.chmod(0o755)
+        # PATH sem nenhum graphify real; o falso entra só quando with_graphify=True.
+        clean_path = os.pathsep.join(
+            d for d in os.environ.get("PATH", "").split(os.pathsep)
+            if d and not any((Path(d) / n).exists() for n in ("graphify", "graphify.exe")))
+        self.env = {**{k: v for k, v in os.environ.items() if not k.startswith(("HX_", "CLAUDE_PROJECT_DIR"))},
+                    "HX_HOME": str(self.hx), "HX_GRAPHIFY_SYNC": "1", "PATH": clean_path,
+                    "FAKE_GRAPHIFY_CALLS": str(self.calls)}
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def run_setup(self, cwd: Path | None = None, with_graphify: bool = True, **extra: str) -> subprocess.CompletedProcess[str]:
+        env = {**self.env, **extra}
+        if with_graphify:
+            env["PATH"] = str(self.bin) + os.pathsep + env["PATH"]
+        body = json.dumps({"hook_event_name": "SessionStart", "cwd": str(cwd or self.repo)})
+        return run_hook(BASH, "graphify-setup.sh", body, env)
+
+    def call_lines(self) -> list[str]:
+        return self.calls.read_text(encoding="utf-8").splitlines() if self.calls.exists() else []
+
+    def test_non_git_dir_does_nothing(self) -> None:
+        plain = Path(self._tmp.name) / "plain"
+        plain.mkdir()
+        result = self.run_setup(cwd=plain)
+        self.assertEqual((result.returncode, result.stdout), (0, ""))
+        self.assertEqual(self.call_lines(), [])
+        self.assertFalse((plain / ".gitignore").exists())
+
+    def test_missing_graphify_warns_once_per_repo(self) -> None:
+        first = self.run_setup(with_graphify=False)
+        second = self.run_setup(with_graphify=False)
+        self.assertEqual((first.returncode, second.returncode), (0, 0))
+        self.assertIn("uv tool install graphifyy", first.stdout)
+        self.assertEqual(second.stdout, "")
+        self.assertFalse((self.repo / ".gitignore").exists())
+
+    def test_setup_is_idempotent(self) -> None:
+        self.assertEqual(self.run_setup().returncode, 0)
+        self.assertEqual(self.run_setup().returncode, 0)
+        gitignore = (self.repo / ".gitignore").read_text(encoding="utf-8")
+        self.assertEqual(gitignore.splitlines().count("graphify-out/"), 1)
+        calls = self.call_lines()
+        self.assertEqual(sum(c.startswith("extract ") and c.endswith("--code-only") for c in calls), 1)
+        self.assertEqual(calls.count("hook install"), 1)
+        self.assertTrue((self.repo / "graphify-out").is_dir())
+
+    def test_build_only_without_graphify_out_and_install_only_when_missing(self) -> None:
+        (self.repo / "graphify-out").mkdir()
+        (self.repo / "graphify-out" / "graph.json").write_text("{}", encoding="utf-8")
+        self.run_setup()
+        self.assertEqual(self.call_lines(), ["hook status", "hook install"])
+        self.calls.unlink()
+        (self.repo / "graphify-out" / "graph.json").unlink()  # build parcial/interrompido: refaz
+        self.run_setup()
+        calls = self.call_lines()
+        self.assertNotIn("hook install", calls)
+        self.assertTrue(any(c.startswith("extract ") for c in calls))
+
+    def test_versioned_hooks_path_is_left_alone(self) -> None:
+        subprocess.run(["git", "-C", str(self.repo), "config", "core.hooksPath", ".husky"], check=True)
+        self.assertEqual(self.run_setup().returncode, 0)
+        self.assertEqual(self.run_setup().returncode, 0)
+        calls = self.call_lines()
+        self.assertNotIn("hook install", calls)
+        self.assertNotIn("hook status", calls)
+        self.assertEqual(sum(c.startswith("extract ") for c in calls), 1)
+        self.assertFalse((self.repo / ".husky").exists())
+
+    def test_gitignore_keeps_crlf_and_missing_final_newline(self) -> None:
+        (self.repo / ".gitignore").write_bytes(b"node_modules/\r\ndist/")
+        self.run_setup()
+        self.assertEqual((self.repo / ".gitignore").read_bytes(), b"node_modules/\r\ndist/\r\ngraphify-out/\r\n")
+        (self.repo / ".gitignore").write_bytes(b"/graphify-out\n")
+        self.run_setup()
+        self.assertEqual((self.repo / ".gitignore").read_bytes(), b"/graphify-out\n")
+
+    def test_graphify_errors_never_fail_the_session(self) -> None:
+        result = self.run_setup(FAKE_GRAPHIFY_FAIL="1")
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("ERRO", (self.hx / ".graphify.log").read_text(encoding="utf-8"))
+
+    def test_bypass_env(self) -> None:
+        result = self.run_setup(HX_NO_GRAPHIFY="1")
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(self.call_lines(), [])
+        self.assertFalse((self.repo / ".gitignore").exists())
+
+    def test_background_mode_returns_fast_and_builds(self) -> None:
+        env = {k: v for k, v in self.env.items() if k != "HX_GRAPHIFY_SYNC"}
+        env["PATH"] = str(self.bin) + os.pathsep + env["PATH"]
+        start = time.monotonic()
+        body = json.dumps({"cwd": str(self.repo)})
+        result = run_hook(BASH, "graphify-setup.sh", body, env)
+        self.assertEqual(result.returncode, 0)
+        self.assertLess(time.monotonic() - start, 5)
+        deadline = time.monotonic() + 20
+        while not (self.repo / "graphify-out").is_dir() and time.monotonic() < deadline:
+            time.sleep(0.2)
+        self.assertTrue((self.repo / "graphify-out").is_dir())
+        while (self.hx / "state").exists() and any((self.hx / "state").glob("*.lock")) and time.monotonic() < deadline:
+            time.sleep(0.2)  # aguarda o background soltar o lock antes do cleanup
 
 
 if __name__ == "__main__":

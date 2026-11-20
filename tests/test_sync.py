@@ -59,6 +59,7 @@ class SyncTest(unittest.TestCase):
         hooks = json.dumps(json.loads((self.claude / "settings.json").read_text(encoding="utf-8"))["hooks"])
         self.assertIn("block-spec-md.sh", hooks)
         self.assertIn("read-guard.sh", hooks)
+        self.assertIn("graphify-setup.sh", hooks)
         self.assertEqual(self.validate(), [])
 
     def test_second_sync_is_a_no_op(self) -> None:

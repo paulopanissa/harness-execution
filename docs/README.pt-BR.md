@@ -180,15 +180,20 @@ graphify install                     # skill no Claude Code
 graphify install --platform codex    # skill no Codex
 ```
 
-Em cada repositório:
+**Setup automático (Claude Code).** O `sync.py` registra o hook `SessionStart` `hooks/graphify-setup.sh`. Sem config por projeto. Ao abrir uma sessão dentro de um repositório git:
+
+- `graphify` fora do `PATH` → um aviso curto por repositório, depois silêncio (marcador em `~/.hx/state/`).
+- `graphify-out/` entra no `.gitignore` do projeto se faltar (idempotente, preserva o final de linha do arquivo).
+- Sem `graphify-out/` → `graphify extract <repo> --code-only` roda em background: só AST local (tree-sitter), sem LLM, sem chave de API.
+- Hooks de git do Graphify ausentes → `graphify hook install` (recria o grafo a cada commit/checkout/merge; também registra um merge driver no `.gitattributes`).
+- Já configurado → nada. Erro nunca derruba a sessão; vai para `~/.hx/.graphify.log`.
+
+Desligar: `HX_NO_GRAPHIFY=1`. Comandos manuais continuam valendo:
 
 ```bash
-/graphify .                # no Claude Code (no Codex: $graphify .)
-graphify hook install      # recria o grafo a cada commit/checkout
+/graphify .                # grafo completo com docs/imagens (no Codex: $graphify .); usa sua chave da API
 graphify update .          # depois de um git pull
 ```
-
-A saída fica em `graphify-out/`. Coloque essa pasta no `.gitignore` do projeto. Código é processado localmente (tree-sitter); docs e imagens usam a sua chave da API.
 
 ### ai-memory: memória por query
 

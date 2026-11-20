@@ -5,6 +5,7 @@ All notable changes to HX. Versions follow [SemVer](https://semver.org/). Update
 ## [Unreleased]
 ### Added
 - `CONTRIBUTING.md` (EN + pt-BR), `SECURITY.md`, `CODEOWNERS`, issue and PR templates, Dependabot for GitHub Actions (patch/minor bumps auto-merge after CI).
+- `hooks/graphify-setup.sh` (`SessionStart`, registered by `sync.py`, checked by `install.py`): in any git repo, adds `graphify-out/` to `.gitignore`, builds a code-only graph in the background (`graphify extract --code-only`, no LLM) and runs `graphify hook install` when missing. Warns once per repo when `graphify` is not installed. Opt out with `HX_NO_GRAPHIFY=1`; log in `~/.hx/.graphify.log`.
 
 ## [0.2.0] - 2026-11-20
 ### Added

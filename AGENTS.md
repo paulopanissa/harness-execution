@@ -14,7 +14,7 @@ Single source: `~/.hx/AGENTS.md` (linked as `~/.claude/CLAUDE.md` and `~/.codex/
 - Do not build what was not asked; improvement idea → ask.
 
 ## 2. Context hierarchy (mandatory)
-1. **Graphify** — symbols, dependencies, call sites.
+1. **Graphify** — symbols, dependencies, call sites (`graphify-out/`, built by the `graphify-setup.sh` hook; absent → fallback).
 2. **ai-memory** — search by query. NEVER read a whole Obsidian vault.
 3. Surgical reads: only files/lines from the Context Pack.
 - Fallback (Graphify/ai-memory down): `rg` scoped to the target module + `rg -i <term> ~/.hx/fallback-memory.jsonl`.

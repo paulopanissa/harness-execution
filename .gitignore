@@ -6,6 +6,9 @@ config.yaml
 .update.lock
 fallback-memory.jsonl
 backups/
+state/
+.graphify.log
+graphify-out/
 # módulo org privado (clonado pelo install.py, nunca versionar aqui)
 vendor/
 # lixo

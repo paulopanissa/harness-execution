@@ -131,7 +131,7 @@ def validate(org: bool) -> list[str]:
     try:
         settings = json.loads((CLAUDE_HOME / "settings.json").read_text(encoding="utf-8"))
         hooks_json = json.dumps(settings.get("hooks", {}))
-        for hook in ("block-spec-md.sh", "read-guard.sh"):
+        for hook in ("block-spec-md.sh", "read-guard.sh", "graphify-setup.sh"):
             if hook not in hooks_json:
                 errors.append(f"hook {hook} ausente em settings.json")
     except (OSError, ValueError) as err:
