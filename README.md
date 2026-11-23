@@ -33,27 +33,70 @@ Coding agents burn tokens in three places: context nobody asked for, text nobody
 
 ## Install
 
-Requirements: `git`, `bash` (Git Bash on Windows) and Python 3.11+. No third-party Python packages.
+Requirements: `git`, `bash` and Python 3.11+. No third-party Python packages. On Windows, `bash` is the Git Bash that ships with Git for Windows: the hooks run in it, while `install.py`, `sync.py` and `update.py` run from PowerShell or Cmd.
+
+### 1. Prerequisites
+
+macOS (Homebrew):
+
+```bash
+brew install git python@3.12
+```
+
+Linux (Debian/Ubuntu; on Fedora use `sudo dnf install git python3`):
+
+```bash
+sudo apt install git python3
+python3 --version   # must be 3.11 or newer
+```
+
+Windows (PowerShell or Cmd), then open a new terminal so the `PATH` is refreshed:
+
+```powershell
+winget install Git.Git
+winget install Python.Python.3.12
+```
+
+### 2. Clone and run the installer
+
+macOS / Linux:
 
 ```bash
 git clone https://github.com/paulopanissa/harness-execution ~/.hx
-python3 ~/.hx/scripts/install.py      # Windows: py ~/.hx/scripts/install.py
+python3 ~/.hx/scripts/install.py
+```
+
+Windows, PowerShell:
+
+```powershell
+git clone https://github.com/paulopanissa/harness-execution "$HOME\.hx"
+py "$HOME\.hx\scripts\install.py"
+```
+
+Windows, Cmd:
+
+```bat
+git clone https://github.com/paulopanissa/harness-execution "%USERPROFILE%\.hx"
+py "%USERPROFILE%\.hx\scripts\install.py"
 ```
 
 The installer:
 
 1. asks whether you want a **private org module** (optional, see below);
-2. writes `~/.hx/config.yaml` and wires `AGENTS.md`, agents, commands and hooks into Claude Code and Codex;
-3. validates everything (links, frontmatter, TOML, hooks);
-4. offers the **UI mods** from the catalog. Nothing is preselected; you choose.
+2. asks whether to turn on **RTK**, only if the `rtk` binary is already installed (see [Optional tools](#optional-tools-graphify-ai-memory-rtk));
+3. writes `~/.hx/config.yaml` and wires `AGENTS.md`, agents, commands and hooks into Claude Code and Codex;
+4. validates everything (links, frontmatter, TOML, hooks);
+5. offers the **UI mods** from the catalog. Nothing is preselected; you choose.
 
 Non-interactive flags: `--no-org`, `--org <url>`, `--mods filetree,hx-skin`, `--no-mods`, `--rtk`, `--no-rtk`.
 
-After editing anything in `~/.hx`, run `python3 ~/.hx/scripts/sync.py` (`--dry-run` to preview).
+After editing anything in `~/.hx`, run `sync.py` (`--dry-run` to preview).
+
+> **Commands in this README** are written for macOS/Linux (`python3 ~/.hx/scripts/...`). On Windows use `py "$HOME\.hx\scripts\..."` in PowerShell or `py "%USERPROFILE%\.hx\scripts\..."` in Cmd. Tool CLIs (`graphify`, `rtk`, `claude`, `codex`) are the same on every OS unless a section says otherwise.
 
 ### Updating
 
-No reinstall needed. `update.py` fast-forwards `~/.hx`, pulls the org repos if enabled, re-syncs and validates. Your `config.yaml`, mods and memory are git-ignored and stay untouched.
+No reinstall needed. `update.py` fast-forwards `~/.hx`, pulls the org repos if enabled, re-syncs and validates. Your `config.yaml`, mods and memory are git-ignored and stay untouched, so settings such as `rtk: true` survive. It does not update the optional tools; each one has its own upgrade command (see below).
 
 ```bash
 python3 ~/.hx/scripts/update.py --check   # is there a new version?
@@ -73,19 +116,6 @@ language: pt-BR   # en (default) | pt-BR
 
 Then run `sync.py`. A file missing from a translation falls back to English.
 
-### RTK: filtered Bash output (optional)
-
-[RTK](https://github.com/rtk-ai/rtk) rewrites the agent's Bash commands (`git status` → `rtk git status`) and returns compact output. HX only registers its hook; install the binary first (`winget install rtk-ai.rtk`, or see the RTK docs for other platforms).
-
-```yaml
-# ~/.hx/config.yaml
-rtk: false   # true → sync.py adds `rtk hook claude` (settings.json) and `rtk hook codex` (~/.codex/hooks.json)
-```
-
-- The hook is added only when `rtk: true` **and** `rtk` is on the `PATH`; otherwise it is skipped, so Bash never breaks. Restart Claude Code / Codex after installing so they see the new `PATH`.
-- When filtered output hides a detail, the agent runs `rtk bypass <cmd>`. `gate.sh` is not affected: the commands inside it run unfiltered.
-- Setting `rtk: false` does not remove an existing hook (RTK may have installed it itself). To remove it for good: `rtk init -g --uninstall`.
-
 ## Using it in your projects: nothing to configure
 
 HX lives on **your machine**, not in your repositories. The installer links `AGENTS.md` as your global `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`, and puts `/hx` in your user commands. So:
@@ -97,19 +127,41 @@ HX lives on **your machine**, not in your repositories. The installer links `AGE
 
 You do not need to edit `~/.claude.json` or `settings.json` by hand either: `sync.py` merges the hooks it needs and keeps a backup.
 
-## Context setup: Graphify + ai-memory (recommended)
+## Optional tools: Graphify, ai-memory, RTK
 
-`AGENTS.md` tells the agent to gather context in this order: **Graphify → ai-memory → surgical reads**. Both tools are optional. Without them HX falls back to a module-scoped `rg` plus `~/.hx/fallback-memory.jsonl`, which works but costs more tokens.
+`AGENTS.md` tells the agent to gather context in this order: **Graphify → ai-memory → surgical reads**, and RTK trims the Bash output the agent reads. All three are recommended and all three are optional.
+
+**They are separate open-source projects.** HX does not bundle, copy or fork their code, does not pin their branches and never downloads them. You install each binary yourself; HX only wires it in (rules in `AGENTS.md`, hooks registered by `sync.py`). A missing tool is skipped and nothing breaks.
+
+| Tool | Saves tokens on | How HX wires it |
+|---|---|---|
+| [Graphify](https://github.com/safishamsi/graphify) | reading whole files to find symbols | `SessionStart` hook builds the graph per repo, automatically |
+| [ai-memory](https://github.com/alphaonedev/ai-memory-mcp) | rediscovering the same gotchas | MCP server you register once; `explorer` and `memory-distill` query it |
+| [RTK](https://github.com/rtk-ai/rtk) | long `git`, test and build output | `PreToolUse` Bash hook, registered by `sync.py` when `rtk: true` |
+
+> The one-line installers below pipe a remote script into your shell. Read the script first if you do not trust the source.
 
 ### Graphify: code graph
 
-[safishamsi/graphify](https://github.com/safishamsi/graphify) builds a graph of your repository (symbols, dependencies, call sites). The agent queries it through the CLI instead of reading whole files.
+Graphify builds a graph of your repository (symbols, dependencies, call sites). The agent queries it through the CLI instead of reading whole files.
+
+Install `uv` first:
+
+| OS | Command |
+|---|---|
+| macOS | `brew install uv` |
+| Linux | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| Windows (PowerShell or Cmd) | `winget install astral-sh.uv` |
+
+Then, on any OS and shell:
 
 ```bash
-uv tool install graphifyy            # or: pipx install graphifyy  (the package name has two "y")
+uv tool install graphifyy            # the package name has two "y" (or: pipx install graphifyy)
 graphify install                     # Claude Code skill
 graphify install --platform codex    # Codex skill
 ```
+
+`graphify` not found afterwards? Run `uv tool update-shell` and open a new terminal. Upgrade later with `uv tool upgrade graphifyy`.
 
 **Automatic setup (Claude Code).** `sync.py` registers the `SessionStart` hook `hooks/graphify-setup.sh`. No per-project config. When a session starts inside a git repository:
 
@@ -128,26 +180,91 @@ graphify update .          # after a git pull
 
 ### ai-memory: memory by query
 
-[alphaonedev/ai-memory-mcp](https://github.com/alphaonedev/ai-memory-mcp) is a SQLite-backed MCP memory server. `explorer` pulls gotchas with 1 to 3 queries, and the `memory-distill` skill stores 3 to 5 durable facts at the end of each task.
+ai-memory is a SQLite-backed MCP memory server. `explorer` pulls gotchas with 1 to 3 queries, and the `memory-distill` skill stores 3 to 5 durable facts at the end of each task.
+
+Install:
+
+macOS / Linux:
 
 ```bash
-cargo install ai-memory
-# macOS/Linux alternative:
 curl -fsSL https://raw.githubusercontent.com/alphaonedev/ai-memory-mcp/main/install.sh | sh
 ```
 
-Register it under the name **`ai-memory`**, which is the name `AGENTS.md` uses. Prefer an absolute `--db` path:
+Windows, PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/alphaonedev/ai-memory-mcp/main/install.ps1 | iex
+```
+
+Windows, Cmd:
+
+```bat
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/alphaonedev/ai-memory-mcp/main/install.ps1 | iex"
+```
+
+Any OS with Rust: `cargo install ai-memory`.
+
+Register it under the name **`ai-memory`**, which is the name `AGENTS.md` uses. Use an absolute `--db` path; on Windows write it with forward slashes.
+
+macOS / Linux:
 
 ```bash
 claude mcp add ai-memory --scope user -- ai-memory --db "$HOME/.claude/ai-memory.db" mcp --tier semantic
 codex mcp add ai-memory -- ai-memory --db "$HOME/.claude/ai-memory.db" mcp --tier semantic
 ```
 
-Pointing both tools at the same `--db` lets Claude Code and Codex share one memory. Tools exposed: `memory_store`, `memory_recall`, `memory_search`.
+Windows, PowerShell (quote `'--'`: npm and Volta install `claude`/`codex` as `.ps1` shims, and PowerShell swallows a bare `--` before it reaches them):
+
+```powershell
+$db = "$($HOME -replace '\\','/')/.claude/ai-memory.db"
+claude mcp add ai-memory --scope user '--' ai-memory --db $db mcp --tier semantic
+codex mcp add ai-memory '--' ai-memory --db $db mcp --tier semantic
+```
+
+Windows, Cmd:
+
+```bat
+claude mcp add ai-memory --scope user -- ai-memory --db "%USERPROFILE:\=/%/.claude/ai-memory.db" mcp --tier semantic
+codex mcp add ai-memory -- ai-memory --db "%USERPROFILE:\=/%/.claude/ai-memory.db" mcp --tier semantic
+```
+
+Check with `claude mcp list` / `codex mcp list`. Pointing both tools at the same `--db` lets Claude Code and Codex share one memory. Tools exposed: `memory_store`, `memory_recall`, `memory_search`.
 
 Using Obsidian? Swap in a vault-backed memory MCP such as [mem-vault](https://github.com/jagoff/mem-vault) or [obsidian-memory-mcp](https://github.com/YuNaga224/obsidian-memory-mcp) and register it as `ai-memory`. The rule stays the same: the agent queries memory and never reads the whole vault.
 
-### Without either
+### RTK: filtered Bash output
+
+RTK rewrites the agent's Bash commands before they run (`git status` → `rtk git status`) and returns compact output. You keep working as usual; the savings show up in `rtk gain`.
+
+1. Install the binary:
+
+   | OS | Command |
+   |---|---|
+   | macOS, or Linux with Homebrew | `brew install rtk` |
+   | Linux, macOS, WSL, Git Bash | `curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh \| sh` |
+   | Windows (PowerShell or Cmd) | `winget install rtk-ai.rtk` |
+
+2. Turn it on in HX, either way:
+
+   ```bash
+   python3 ~/.hx/scripts/install.py --rtk   # or set "rtk: true" in ~/.hx/config.yaml and run sync.py
+   ```
+
+   `sync.py` then adds `rtk hook claude` to `~/.claude/settings.json` and `rtk hook codex` to `~/.codex/hooks.json`. The hook is added only when `rtk: true` **and** `rtk` is on the `PATH`, so Bash never breaks.
+
+3. Restart Claude Code and Codex so they see the new `PATH`.
+
+4. Check: `rtk init --show` lists `[ok] Hook: rtk hook claude` (its `RTK.md: not found` line is expected: the RTK rule lives in `AGENTS.md`). After some work, `rtk gain` shows the tokens saved.
+
+Good to know:
+
+- When filtered output hides a detail, the agent runs `rtk bypass <cmd>` on its own.
+- Only the **Bash** tool is filtered. Commands Claude Code runs through its PowerShell tool are not.
+- `gate.sh` is not affected: the commands inside it run unfiltered, and on failure it keeps the full log in `~/.hx/state/gate-last-fail.log`.
+- Upgrade: `brew upgrade rtk` or `winget upgrade rtk-ai.rtk` (`update.py` does not touch the binary).
+- Turn off: `rtk: false` stops `sync.py` from adding the hook but does not remove an existing one (RTK may have installed it itself). Remove it for good with `rtk init -g --uninstall`.
+
+### Without any of them
 
 Everything still works, at a higher token cost. Memory goes to `~/.hx/fallback-memory.jsonl` (one JSON line per fact) and is searched with `rg`.
 
@@ -176,7 +293,7 @@ The agent pauses only for: critical ambiguity, failure after 2 attempts, and bef
 | `/hx:clean-legacy` | strips old orchestrator config from `CLAUDE.md` |
 | `/hx:org <phase> <id>` | one phase of the org flow (org module only) |
 
-In Codex the same commands work as plain text: `AGENTS.md` tells the agent to read `~/.hx/commands/<file>.md`.
+In Codex the TUI rejects custom `/hx` commands, so `sync.py` generates them as skills: type `$hx`, `$hx-fix`, `$hx-pre-pr`… (in `~/.agents/skills/`). A `/hx…` typed as plain text still works: `AGENTS.md` tells the agent to read `~/.hx/commands/<file>.md`.
 
 ### Agents
 
