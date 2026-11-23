@@ -155,6 +155,25 @@ def choose_mods(args: argparse.Namespace) -> list[str]:
     return mod.install_many(catalog, wanted) if wanted else []
 
 
+RTK_HINT = "instale antes: `winget install rtk-ai.rtk` (ou edição Apache-only rtk-oss: https://www.rtk-ai.app/docs)"
+
+
+def choose_rtk(args: argparse.Namespace, current: bool) -> bool:
+    """RTK é opcional e externo: o HX nunca baixa o binário, só liga o hook se ele existir."""
+    if args.no_rtk:
+        return False
+    has_rtk = shutil.which("rtk") is not None
+    if not has_rtk:
+        if args.rtk or current:
+            print(f"✗ rtk não encontrado no PATH → rtk: false; {RTK_HINT}")
+        return False
+    if args.rtk:
+        return True
+    default = "S/n" if current else "s/N"
+    answer = ask(f"Ligar RTK (filtra saída de Bash: git, testes, build)? [{default}]: ").lower()
+    return current if not answer else answer in ("s", "sim", "y", "yes")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="instalador do harness HX")
     org_group = parser.add_mutually_exclusive_group()
@@ -163,6 +182,9 @@ def main() -> int:
     mods_group = parser.add_mutually_exclusive_group()
     mods_group.add_argument("--mods", metavar="IDS", help="ids do catálogo separados por vírgula")
     mods_group.add_argument("--no-mods", action="store_true", help="não oferece mods")
+    rtk_group = parser.add_mutually_exclusive_group()
+    rtk_group.add_argument("--rtk", action="store_true", help="liga o hook do RTK (binário precisa estar no PATH)")
+    rtk_group.add_argument("--no-rtk", action="store_true", help="desliga o hook do RTK sem perguntar")
     args = parser.parse_args()
 
     cfg = load_config()
@@ -172,9 +194,10 @@ def main() -> int:
     if preset_url and not org_ok:
         print("✗ falha no módulo org → seguindo com org_enabled: false")
 
-    cfg = {**cfg, "org_enabled": org_ok, "org_preset": preset_url or current}
+    rtk_on = choose_rtk(args, bool(cfg.get("rtk")))
+    cfg = {**cfg, "org_enabled": org_ok, "org_preset": preset_url or current, "rtk": rtk_on}
     save_config(cfg)
-    print(f"→ {HX_HOME / 'config.yaml'}: org_enabled={str(org_ok).lower()}")
+    print(f"→ {HX_HOME / 'config.yaml'}: org_enabled={str(org_ok).lower()} rtk={str(rtk_on).lower()}")
     FALLBACK_MEMORY.touch(exist_ok=True)
     make_executable()
 

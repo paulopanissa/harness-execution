@@ -16,6 +16,8 @@ HOME = Path.home()
 HX_HOME = Path(os.environ.get("HX_HOME", HOME / ".hx")).expanduser()
 CLAUDE_HOME = Path(os.environ.get("HX_CLAUDE_HOME", HOME / ".claude")).expanduser()
 CODEX_HOME = Path(os.environ.get("CODEX_HOME", HOME / ".codex")).expanduser()
+# Skills de usuário do Codex CLI (`$nome` no prompt).
+CODEX_SKILLS_HOME = Path(os.environ.get("HX_CODEX_SKILLS_HOME", HOME / ".agents" / "skills")).expanduser()
 
 CONFIG_PATH = HX_HOME / "config.yaml"
 LAST_SYNC_PATH = HX_HOME / ".last_sync"
@@ -35,6 +37,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "org_preset": "",
     "auto_update_days": 7,
     "mods": "",
+    # Integração opcional com RTK (filtro de saída de Bash): sync.py registra `rtk hook` se o binário existir.
+    "rtk": False,
     "models": {
         "claude_fast": "haiku",
         "claude_default": "sonnet",

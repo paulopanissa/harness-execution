@@ -6,6 +6,8 @@
 - Gera agentes em ~/.claude/agents/*.md e ~/.codex/agents/*.toml.
 - Expõe comandos em ~/.claude/commands/ (hx.md + hx/<sub>.md => /hx:<sub>).
 - Merge seguro de hooks em ~/.claude/settings.json (com backup).
+- `rtk: true` + binário no PATH → hook `rtk hook claude|codex` (settings.json e ~/.codex/hooks.json).
+  Desligar não remove o hook (pode ter sido instalado pelo próprio RTK): use `rtk init -g --uninstall`.
 Arquivos de terceiros sobrescritos vão para ~/.hx/backups/<timestamp>/.
 Uso: sync.py [--dry-run] [--quiet]
 """
@@ -26,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from hxlib import (  # noqa: E402
     CLAUDE_HOME,
     CODEX_HOME,
+    CODEX_SKILLS_HOME,
     HOME,
     HX_HOME,
     LAST_SYNC_PATH,
@@ -44,6 +47,8 @@ HOOK_MARK_UPDATE = "check_updates.py"
 HOOK_MARK_ORG = "org-only.sh"
 HOOK_MARK_READ = "read-guard.sh"
 HOOK_MARK_GRAPHIFY = "graphify-setup.sh"
+HOOK_MARK_RTK_CLAUDE = "claude"  # → `rtk hook claude`
+HOOK_MARK_RTK_CODEX = "codex"  # → `rtk hook codex`
 
 CODEX_TOOL_MAP = {
     "Read": "shell (`sed -n`/`cat`)",
@@ -230,12 +235,32 @@ def command_target(stem: str) -> Path:
     return CLAUDE_HOME / "commands" / "hx" / f"{stem.removeprefix('hx-')}.md"
 
 
+def build_codex_skill(stem: str, text: str) -> str:
+    """Codex TUI intercepta `/hx` como comando nativo; o equivalente lá é a skill `$hx`."""
+    meta, body = parse_frontmatter(text)
+    desc = meta.get("description", stem).replace('"', "'")
+    hint = meta.get("argument-hint", "")
+    body = _CODEX_TOOL_RE.sub(lambda m: CODEX_TOOL_MAP[m.group(1)], body.strip())
+    return (
+        "---\n"
+        f"name: {stem}\n"
+        f'description: "{desc}. Use only when the user explicitly invokes ${stem}."\n'
+        "---\n"
+        "<!-- Gerado por ~/.hx/scripts/sync.py a partir de ~/.hx/commands — não edite aqui. -->\n"
+        f"Invocation: `${stem} {hint}`. `$ARGUMENTS` = text the user wrote after `${stem}` (may be empty).\n\n"
+        f"{body}\n"
+    )
+
+
 def sync_commands(ctx: Ctx) -> None:
     org = bool(ctx.cfg.get("org_enabled"))
     for root in sorted((HX_HOME / "commands").glob("hx*.md")):
         if root.stem == "hx-org" and not org:
             continue
-        link_file(ctx, localized(f"commands/{root.name}", ctx.cfg), command_target(root.stem))
+        src = localized(f"commands/{root.name}", ctx.cfg)
+        link_file(ctx, src, command_target(root.stem))
+        skill = build_codex_skill(root.stem, src.read_text(encoding="utf-8"))
+        write_generated(ctx, CODEX_SKILLS_HOME / root.stem / "SKILL.md", skill)
 
 
 # ---------------------------------------------------------------- settings.json
@@ -296,14 +321,56 @@ def find_org_guards() -> list[tuple[Path, str]]:
     return found
 
 
+def _load_json(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8") or "{}")
+    except ValueError as err:
+        raise SystemExit(f"sync: {path} inválido ({err}); corrija antes de sincronizar")
+
+
+def _save_json(ctx: Ctx, path: Path, original: dict[str, Any], data: dict[str, Any]) -> None:
+    if data == original:
+        return
+    backup_path = path.with_name(f"{path.name}.hx-bak-{ctx.stamp}")
+    ctx.changes += 1
+    ctx.log(f"merge   {path} (backup: {backup_path.name})")
+    if ctx.dry_run:
+        return
+    if path.exists():
+        shutil.copy2(path, backup_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def rtk_enabled(cfg: dict[str, Any]) -> bool:
+    """Hook do RTK só com `rtk: true` E binário no PATH (hook sem binário quebraria todo Bash)."""
+    return bool(cfg.get("rtk")) and shutil.which("rtk") is not None
+
+
+def _with_rtk_hook(data: dict[str, Any], agent: str) -> dict[str, Any]:
+    # Registro direto (não `rtk init`): o init anexa @RTK.md ao CLAUDE.md/AGENTS.md, que são links p/ ~/.hx/AGENTS.md.
+    # Marcador sem o nome do binário: detecta também hook já instalado pelo próprio `rtk init` (rtk.exe, caminho absoluto).
+    if _has_hook(data, "PreToolUse", f"hook {agent}"):
+        return data
+    # Sem caminho absoluto: o comando reescrito (`rtk git ...`) depende do PATH de qualquer forma; com `rtk`
+    # fora do PATH o hook falha aberto (comando roda cru). Forma exata que `rtk init --show` reconhece.
+    return _add_hook(data, "PreToolUse", "Bash", f"rtk hook {agent}", 10)
+
+
+def sync_codex_hooks(ctx: Ctx) -> None:
+    """Codex lê hooks de $CODEX_HOME/hooks.json (mesmo formato do settings.json do Claude)."""
+    if not rtk_enabled(ctx.cfg):
+        return
+    path = CODEX_HOME / "hooks.json"
+    original = _load_json(path)
+    _save_json(ctx, path, original, _with_rtk_hook(original, HOOK_MARK_RTK_CODEX))
+
+
 def sync_settings(ctx: Ctx) -> None:
     path = CLAUDE_HOME / "settings.json"
-    original: dict[str, Any] = {}
-    if path.exists():
-        try:
-            original = json.loads(path.read_text(encoding="utf-8") or "{}")
-        except ValueError as err:
-            raise SystemExit(f"sync: {path} inválido ({err}); corrija antes de sincronizar")
+    original = _load_json(path)
     settings = original
     hooks_dir = (HX_HOME / "hooks").as_posix()
 
@@ -313,6 +380,8 @@ def sync_settings(ctx: Ctx) -> None:
         settings = _add_hook(settings, "PreToolUse", "Read", f'bash "{hooks_dir}/{HOOK_MARK_READ}"', 10)
     if not _has_hook(settings, "SessionStart", HOOK_MARK_GRAPHIFY):
         settings = _add_hook(settings, "SessionStart", None, f'bash "{hooks_dir}/{HOOK_MARK_GRAPHIFY}"', 5)
+    if rtk_enabled(ctx.cfg):
+        settings = _with_rtk_hook(settings, HOOK_MARK_RTK_CLAUDE)
 
     org = bool(ctx.cfg.get("org_enabled"))
     if org and not _has_hook(settings, "SessionStart", HOOK_MARK_UPDATE):
@@ -328,17 +397,7 @@ def sync_settings(ctx: Ctx) -> None:
     if not org and _has_hook(settings, "PreToolUse", HOOK_MARK_ORG):
         settings = _drop_hook(settings, "PreToolUse", HOOK_MARK_ORG)
 
-    if settings == original:
-        return
-    backup_path = path.with_name(f"settings.json.hx-bak-{ctx.stamp}")
-    ctx.changes += 1
-    ctx.log(f"merge   {path} (backup: {backup_path.name})")
-    if ctx.dry_run:
-        return
-    if path.exists():
-        shutil.copy2(path, backup_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(settings, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    _save_json(ctx, path, original, settings)
 
 
 # ---------------------------------------------------------------- manifest / cleanup
@@ -382,6 +441,7 @@ def main() -> int:
         sync_commands(ctx)
         prune_stale(ctx, previous)
         sync_settings(ctx)
+        sync_codex_hooks(ctx)
     except OSError as err:
         print(f"sync: erro de I/O: {err}", file=sys.stderr)
         return 1
