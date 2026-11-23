@@ -2,10 +2,11 @@
 # gate.sh — validação determinística do diff (zero IA). Requer bash >= 4.
 # Roda só typecheck/lint/testes relacionados aos arquivos alterados.
 # Uso: gate.sh [--base <ref>]   (ou env HX_GATE_BASE=origin/main)
-# Saída: "GATE: PASS" (exit 0) | "GATE: FAIL — <etapa>" + ≤ 25 linhas (exit 1)
+# Saída: "GATE: PASS" (exit 0) | "GATE: FAIL — <etapa>" + ≤ 25 linhas + caminho do log completo (exit 1)
 set -uo pipefail
 
 MAX_LINES=25
+FULL_LOG="${HX_GATE_LOG:-${HX_HOME:-$HOME/.hx}/state/gate-last-fail.log}"
 BASE="${HX_GATE_BASE:-}"
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -51,6 +52,10 @@ fail() {
   [ -z "$filtered" ] && filtered="$(printf '%s\n' "$clean" | tail -n "$MAX_LINES")"
   echo "GATE: FAIL — $FAILED_STEP"
   printf '%s\n' "$filtered"
+  # Saída filtrada é parcial: guarda o log completo para leitura com range, sem rerodar o gate.
+  if mkdir -p "${FULL_LOG%/*}" 2>/dev/null && printf '%s\n' "$clean" >"$FULL_LOG" 2>/dev/null; then
+    echo "log completo: $FULL_LOG"
+  fi
   exit 1
 }
 

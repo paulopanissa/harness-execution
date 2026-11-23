@@ -31,6 +31,7 @@ def sandbox_env(tmp: Path) -> dict[str, str]:
         "HX_HOME": str(tmp / "hx"),
         "HX_CLAUDE_HOME": str(tmp / "claude"),
         "CODEX_HOME": str(tmp / "codex"),
+        "HX_CODEX_SKILLS_HOME": str(tmp / "codex-skills"),
         "PYTHONIOENCODING": "utf-8",
         "GIT_AUTHOR_NAME": "hx-test", "GIT_AUTHOR_EMAIL": "hx-test@example.invalid",
         "GIT_COMMITTER_NAME": "hx-test", "GIT_COMMITTER_EMAIL": "hx-test@example.invalid",

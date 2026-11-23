@@ -47,7 +47,7 @@ O instalador:
 3. valida tudo (links, frontmatter, TOML, hooks);
 4. oferece os **mods de UI** do catálogo. Nenhum vem marcado; você escolhe.
 
-Flags para rodar sem perguntas: `--no-org`, `--org <url>`, `--mods filetree,hx-skin`, `--no-mods`.
+Flags para rodar sem perguntas: `--no-org`, `--org <url>`, `--mods filetree,hx-skin`, `--no-mods`, `--rtk`, `--no-rtk`.
 
 Depois de editar qualquer coisa em `~/.hx`, rode `python3 ~/.hx/scripts/sync.py` (`--dry-run` para ver antes).
 
@@ -72,6 +72,19 @@ language: pt-BR   # en (padrão) | pt-BR
 ```
 
 Depois rode `sync.py`. Arquivo sem tradução cai para o inglês.
+
+### RTK: saída de Bash filtrada (opcional)
+
+O [RTK](https://github.com/rtk-ai/rtk) reescreve os comandos Bash do agente (`git status` → `rtk git status`) e devolve uma saída compacta. O HX só registra o hook; instale o binário antes (`winget install rtk-ai.rtk`, ou veja a documentação do RTK para outras plataformas).
+
+```yaml
+# ~/.hx/config.yaml
+rtk: false   # true → sync.py adiciona `rtk hook claude` (settings.json) e `rtk hook codex` (~/.codex/hooks.json)
+```
+
+- O hook só entra com `rtk: true` **e** `rtk` no `PATH`; senão é pulado, para o Bash nunca quebrar. Reinicie o Claude Code / Codex depois de instalar, para eles enxergarem o novo `PATH`.
+- Quando a saída filtrada esconde um detalhe, o agente roda `rtk bypass <cmd>`. O `gate.sh` não é afetado: os comandos dentro dele rodam sem filtro.
+- Voltar para `rtk: false` não remove um hook existente (o próprio RTK pode tê-lo instalado). Para remover de vez: `rtk init -g --uninstall`.
 
 ## Usando nos seus projetos: nada para configurar
 

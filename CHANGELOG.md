@@ -6,6 +6,11 @@ All notable changes to HX. Versions follow [SemVer](https://semver.org/). Update
 ### Added
 - `CONTRIBUTING.md` (EN + pt-BR), `SECURITY.md`, `CODEOWNERS`, issue and PR templates, Dependabot for GitHub Actions (patch/minor bumps auto-merge after CI).
 - `hooks/graphify-setup.sh` (`SessionStart`, registered by `sync.py`, checked by `install.py`): in any git repo, adds `graphify-out/` to `.gitignore`, builds a code-only graph in the background (`graphify extract --code-only`, no LLM) and runs `graphify hook install` when missing. Warns once per repo when `graphify` is not installed. Opt out with `HX_NO_GRAPHIFY=1`; log in `~/.hx/.graphify.log`.
+- Codex skills: `sync.py` generates `$hx`, `$hx-fix`, `$hx-pre-pr`... in `~/.agents/skills/` (override with `HX_CODEX_SKILLS_HOME`), since the Codex TUI rejects custom `/hx` commands.
+- Optional [RTK](https://github.com/rtk-ai/rtk) integration: `rtk: true` in `config.yaml` (or `install.py --rtk` / `--no-rtk`) makes `sync.py` register `rtk hook claude` and `rtk hook codex` as `PreToolUse` Bash hooks, only when `rtk` is on the `PATH`. `AGENTS.md` tells the agent to use `rtk bypass <cmd>` when filtered output lacks detail.
+
+### Changed
+- `gate.sh` saves the full output of a failing step to `~/.hx/state/gate-last-fail.log` (override with `HX_GATE_LOG`) and prints its path as `log completo:`, so the agent reads it with a range instead of rerunning the gate.
 
 ## [0.2.0] - 2026-11-20
 ### Added

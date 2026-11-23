@@ -19,6 +19,7 @@ Versão pt-BR de `~/.hx/AGENTS.md` (ativa com `language: pt-BR` no `config.yaml`
 3. Leitura cirúrgica: só arquivos/linhas do Context Pack.
 - Fallback (Graphify/ai-memory fora): `rg` restrito ao módulo alvo + `rg -i <termo> ~/.hx/fallback-memory.jsonl`.
 - Proibido: `rg` no repo inteiro sem escopo, ler arquivo > 400 linhas sem range (hook `read-guard.sh` bloqueia), despejar árvores.
+- Saída de Bash: `gate.sh` falhou → ler o caminho `log completo:` que ele imprime, com range (sem rerodar). Com RTK ligado (`rtk: true`), comandos voltam filtrados; faltou detalhe → `rtk bypass <cmd>`.
 - Lib de terceiros: Context7 antes de chutar API.
 
 ## 3. Anti-.md
@@ -57,7 +58,7 @@ Ativo se `org_enabled: true` em `~/.hx/config.yaml` E (remote casa `remote_patte
 - Azure DevOps: MCP `azure-devops` (WI, PR, comentários). GitHub: MCP GitHub ou `gh`.
 
 ## 8. Comandos
-Claude: `/hx…` nativos. Codex: ao ver `/hx…` no prompt, leia `~/.hx/i18n/pt-BR/commands/<arquivo>.md` e execute.
+Claude: `/hx…` nativos. Codex: o TUI rejeita `/hx` custom; use as skills `$hx`, `$hx-fix`, `$hx-pre-pr`… (geradas por `sync.py` em `~/.agents/skills/`). Se `/hx…` chegar como texto, leia `~/.hx/i18n/pt-BR/commands/<arquivo>.md` e execute.
 - `/hx <entrada>` → `hx.md` · `/hx:fix <erro>` → `hx-fix.md` · `/hx:pre-pr` → `hx-pre-pr.md`
 - `/hx:test` → `hx-test.md` · `/hx:game <feature>` → `hx-game.md` · `/hx:clean-legacy` → `hx-clean-legacy.md`
 - `/hx:org <fase> <id>` → `hx-org.md` (só com `org_enabled: true`)

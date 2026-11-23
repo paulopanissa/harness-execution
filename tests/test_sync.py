@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -56,7 +57,13 @@ class SyncTest(unittest.TestCase):
             self.assertIn("developer_instructions", data)
         self.assertTrue((self.claude / "commands" / "hx.md").is_file())
         self.assertFalse((self.claude / "commands" / "hx" / "org.md").exists())
-        hooks = json.dumps(json.loads((self.claude / "settings.json").read_text(encoding="utf-8"))["hooks"])
+        skills = self.tmp / "codex-skills"
+        skill = (skills / "hx" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertTrue(skill.startswith("---\nname: hx\ndescription: "))
+        self.assertIn("$ARGUMENTS", skill)
+        self.assertTrue((skills / "hx-fix" / "SKILL.md").is_file())
+        self.assertFalse((skills / "hx-org").exists())
+        hooks =json.dumps(json.loads((self.claude / "settings.json").read_text(encoding="utf-8"))["hooks"])
         self.assertIn("block-spec-md.sh", hooks)
         self.assertIn("read-guard.sh", hooks)
         self.assertIn("graphify-setup.sh", hooks)
@@ -90,6 +97,39 @@ class SyncTest(unittest.TestCase):
         data = json.loads(settings.read_text(encoding="utf-8"))
         self.assertEqual(data["theme"], "dark")
         self.assertIn("echo hi", json.dumps(data["hooks"]["Stop"]))
+
+    def _fake_rtk_on_path(self) -> None:
+        bin_dir = self.tmp / "bin"
+        bin_dir.mkdir(exist_ok=True)
+        fake = bin_dir / ("rtk.cmd" if sys.platform == "win32" else "rtk")
+        fake.write_text("@echo off\n" if sys.platform == "win32" else "#!/bin/sh\n", encoding="utf-8")
+        fake.chmod(0o755)
+        self.env["PATH"] = f"{bin_dir}{os.pathsep}{self.env.get('PATH', '')}"
+
+    def test_rtk_hook_registered_only_when_enabled_and_installed(self) -> None:
+        (self.hx / "config.yaml").write_text("rtk: true\n", encoding="utf-8")
+        real_path = self.env.get("PATH", "")
+        self.env["PATH"] = str(self.tmp / "empty")  # sem binário rtk → nenhum hook
+        self.sync()
+        self.assertNotIn("hook claude", (self.claude / "settings.json").read_text(encoding="utf-8"))
+        self.assertFalse((self.codex / "hooks.json").exists())
+
+        self.env["PATH"] = real_path
+        self._fake_rtk_on_path()
+        self.sync()
+        claude_hooks = json.loads((self.claude / "settings.json").read_text(encoding="utf-8"))["hooks"]["PreToolUse"]
+        self.assertIn({"matcher": "Bash", "hooks": [{"type": "command", "command": "rtk hook claude", "timeout": 10}]}, claude_hooks)
+        codex_hooks = json.loads((self.codex / "hooks.json").read_text(encoding="utf-8"))["hooks"]["PreToolUse"]
+        self.assertEqual(codex_hooks[0]["hooks"][0]["command"], "rtk hook codex")
+        self.assertEqual(changes(self.sync()), 0)
+
+    def test_rtk_hook_from_rtk_init_is_not_duplicated(self) -> None:
+        (self.hx / "config.yaml").write_text("rtk: true\n", encoding="utf-8")
+        self._fake_rtk_on_path()
+        existing = {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "C:/bin/rtk.exe hook claude"}]}]}}
+        (self.claude / "settings.json").write_text(json.dumps(existing), encoding="utf-8")
+        self.sync()
+        self.assertEqual((self.claude / "settings.json").read_text(encoding="utf-8").count("hook claude"), 1)
 
 
 if __name__ == "__main__":
